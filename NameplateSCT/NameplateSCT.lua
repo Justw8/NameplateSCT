@@ -43,6 +43,8 @@ local defaults = {
         enabled = true,
         xOffset = 0,
         yOffset = 0,
+        xOffsetPersonal = 0,
+        yOffsetPersonal = -100,
 
         font = defaultFont,
         damageColor = true,
@@ -426,8 +428,12 @@ local function AnimationOnUpdate()
                 -- the animation is over
                 recycleFontString(fontString);
             else
-                local isTarget = UnitIsUnit(fontString.unit, "target");
-
+                local isTarget = false
+                if fontString.unit then
+                  isTarget = UnitIsUnit(fontString.unit, "target");
+                else
+                  fontString.unit = "player"
+                end
                 -- frame level
                 if (fontString.frameLevel) then
                     if (isTarget) then
@@ -482,8 +488,11 @@ local function AnimationOnUpdate()
                 end
 
                 if (not UnitIsDead(fontString.unit) and fontString.anchorFrame and fontString.anchorFrame:IsShown()) then
-                    fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset, NameplateSCT.db.global.yOffset + yOffset);
-
+                    if fontString.unit == "player" then -- player frame
+                      fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffsetPersonal + xOffset, NameplateSCT.db.global.yOffsetPersonal + yOffset); -- Only allows for adjusting vertical offset
+                    else -- nameplate frames
+                      fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset, NameplateSCT.db.global.yOffset + yOffset);
+                    end
                     -- remember the last position of the nameplate
                     local x, y = fontString:GetCenter();
                     guidNameplatePositionX[fontString.guid] = x - (NameplateSCT.db.global.xOffset + xOffset);
@@ -512,7 +521,7 @@ function NameplateSCT:Animate(fontString, anchorFrame, duration, animation)
     fontString.animation = animation;
     fontString.animatingDuration = duration;
     fontString.animatingStartTime = GetTime();
-    fontString.anchorFrame = anchorFrame;
+    fontString.anchorFrame = anchorFrame == player and UIParent or anchorFrame;
 
     if (animation == "verticalUp") then
         fontString.distance = ANIMATION_VERTICAL_DISTANCE;
@@ -588,10 +597,10 @@ end
 function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED(event, time, cle, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, ...)
     -- only use player events (or their pet/guardian)
     if ((playerGUID == sourceGUID)
+		or (NameplateSCT.db.global.personal and playerGUID == destGUID)
         or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then
         local destUnit = guidToUnit[destGUID];
-
-        if (destUnit) then
+        if (destUnit) or (destGUID == playerGUID) then
             if (string.find(cle, "_DAMAGE")) then
                 local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
 
@@ -600,17 +609,19 @@ function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED(event, time, cle, hideCaster, 
                 else
                     spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
                 end
-
                 self:DamageEvent(destGUID, spellID, amount, school, critical);
             elseif(string.find(cle, "_MISSED")) then
                 local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
 
                 if (string.find(cle, "SWING")) then
-                    missType, isOffHand, amountMissed = "melee", ...;
+                    if destGUID == playerGUID then
+                      missType, isOffHand, amountMissed = ...;
+                    else
+                      missType, isOffHand, amountMissed = "melee", ...;
+                    end
                 else
                     spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
                 end
-
                 self:MissEvent(destGUID, spellID, missType);
             end
         end
@@ -707,7 +718,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
     end
 
     -- shrink small hits
-    if (self.db.global.sizing.smallHits) then
+    if (self.db.global.sizing.smallHits) and not playerGUID == guid then
         if (not lastDamageEventTime or (lastDamageEventTime + SMALL_HIT_EXPIRY_WINDOW < GetTime())) then
             numDamageEvents = 0;
             runningAverageDamageEvents = 0;
@@ -724,7 +735,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
     end
 
     -- embiggen crit's size
-    if (self.db.global.sizing.crits and crit) then
+    if (self.db.global.sizing.crits and crit) and not playerGUID == guid then
         size = size * self.db.global.sizing.critsScale;
     end
 
@@ -738,7 +749,6 @@ end
 
 function NameplateSCT:MissEvent(guid, spellID, missType)
     local text, animation, pow, size, icon, alpha;
-
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
 
@@ -789,7 +799,9 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
     end
 
     -- if there isn't an anchor frame, make sure that there is a guidNameplatePosition cache entry
-    if (not nameplate and not (guidNameplatePositionX[guid] and guidNameplatePositionY[guid])) then
+    if playerGUID == guid and not unit then
+          nameplate = player
+    elseif (not nameplate and not (guidNameplatePositionX[guid] and guidNameplatePositionY[guid])) then
         return;
     end
 
@@ -872,6 +884,15 @@ local menu = {
                 end
             end,
             order = 2,
+        },
+
+        personalNameplate = {
+            type = 'toggle',
+            name = "Personal SCT",
+            desc = "Also show numbers when you take damage on your personal nameplate or center screen",
+			get = function() return NameplateSCT.db.global.personal; end,
+			set = function(_, newValue) NameplateSCT.db.global.personal = newValue; end,
+            order = 3,
         },
 
         animations = {
@@ -970,6 +991,34 @@ local menu = {
                     get = function() return NameplateSCT.db.global.yOffset; end,
                     set = function(_, newValue) NameplateSCT.db.global.yOffset = newValue; end,
                     order = 11,
+                    width = "full",
+                },
+
+                xOffsetPersonal = {
+                    type = 'range',
+                    name = "X Offset Personal SCT",
+                    hidden = function() return not NameplateSCT.db.global.personal; end,
+                    desc = "Only used if Personal Nameplate is Disabled",
+                    softMin = -400,
+                    softMax = 400,
+                    step = 1,
+                    get = function() return NameplateSCT.db.global.xOffsetPersonal; end,
+                    set = function(_, newValue) NameplateSCT.db.global.xOffsetPersonal = newValue; end,
+                    order = 12,
+                    width = "full",
+                },
+
+                yOffsetPersonal = {
+                    type = 'range',
+                    name = "Y Offset Personal SCT",
+                    hidden = function() return not NameplateSCT.db.global.personal; end,
+                    desc = "Only used if Personal Nameplate is Disabled",
+                    softMin = -400,
+                    softMax = 400,
+                    step = 1,
+                    get = function() return NameplateSCT.db.global.yOffsetPersonal; end,
+                    set = function(_, newValue) NameplateSCT.db.global.yOffsetPersonal = newValue; end,
+                    order = 12,
                     width = "full",
                 },
             },
