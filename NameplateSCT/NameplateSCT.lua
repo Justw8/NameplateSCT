@@ -449,7 +449,7 @@ local function AnimationOnUpdate()
 
                 -- alpha
                 local startAlpha = NameplateSCT.db.global.formatting.alpha;
-                if (NameplateSCT.db.global.useOffTarget and not isTarget) then
+                if (NameplateSCT.db.global.useOffTarget and not isTarget and fontString.unit ~= "player") then
                     startAlpha = NameplateSCT.db.global.offTargetFormatting.alpha;
                 end
 
@@ -649,7 +649,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
 
-    if (self.db.global.useOffTarget and not isTarget) then
+    if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
         icon = self.db.global.offTargetFormatting.icon;
         alpha = self.db.global.offTargetFormatting.alpha;
@@ -752,7 +752,7 @@ function NameplateSCT:MissEvent(guid, spellID, missType)
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
 
-    if (self.db.global.useOffTarget and not isTarget) then
+    if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
         icon = self.db.global.offTargetFormatting.icon;
         alpha = self.db.global.offTargetFormatting.alpha;
