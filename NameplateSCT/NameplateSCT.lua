@@ -606,6 +606,8 @@ function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED(event, time, cle, hideCaster, 
 
                 if (string.find(cle, "SWING")) then
                     spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
+                elseif (string.find(cle, "ENVIRONMENTAL")) then
+                    spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
                 else
                     spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
                 end
