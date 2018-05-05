@@ -594,28 +594,28 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     end
 end
 if CombatLogGetCurrentEventInfo then
-	function NameplateSCT:CombatFilter(event, time, cle, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, ...)
+	function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
 		-- only use player events (or their pet/guardian)
 		if ((playerGUID == sourceGUID)
 			or (NameplateSCT.db.global.personal and playerGUID == destGUID)
 			or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then
 			local destUnit = guidToUnit[destGUID];
 			if (destUnit) or (destGUID == playerGUID) then
-				if (string.find(cle, "_DAMAGE")) then
+				if (string.find(clue, "_DAMAGE")) then
 					local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
 
-					if (string.find(cle, "SWING")) then
+					if (string.find(clue, "SWING")) then
 						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
-					elseif (string.find(cle, "ENVIRONMENTAL")) then
+					elseif (string.find(clue, "ENVIRONMENTAL")) then
 						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
 					else
 						spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
 					end
 					self:DamageEvent(destGUID, spellID, amount, school, critical);
-				elseif(string.find(cle, "_MISSED")) then
+				elseif(string.find(clue, "_MISSED")) then
 					local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
 
-					if (string.find(cle, "SWING")) then
+					if (string.find(clue, "SWING")) then
 						if destGUID == playerGUID then
 						  missType, isOffHand, amountMissed = ...;
 						else
