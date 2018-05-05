@@ -593,43 +593,82 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
         stopSavingNameplatePositions();
     end
 end
+if CombatLogGetCurrentEventInfo then
+	function NameplateSCT:CombatFilter(event, time, cle, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, ...)
+		-- only use player events (or their pet/guardian)
+		if ((playerGUID == sourceGUID)
+			or (NameplateSCT.db.global.personal and playerGUID == destGUID)
+			or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then
+			local destUnit = guidToUnit[destGUID];
+			if (destUnit) or (destGUID == playerGUID) then
+				if (string.find(cle, "_DAMAGE")) then
+					local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
 
-function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED(event, time, cle, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, ...)
-    -- only use player events (or their pet/guardian)
-    if ((playerGUID == sourceGUID)
-		or (NameplateSCT.db.global.personal and playerGUID == destGUID)
-        or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then
-        local destUnit = guidToUnit[destGUID];
-        if (destUnit) or (destGUID == playerGUID) then
-            if (string.find(cle, "_DAMAGE")) then
-                local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+					if (string.find(cle, "SWING")) then
+						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
+					elseif (string.find(cle, "ENVIRONMENTAL")) then
+						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+					else
+						spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
+					end
+					self:DamageEvent(destGUID, spellID, amount, school, critical);
+				elseif(string.find(cle, "_MISSED")) then
+					local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
 
-                if (string.find(cle, "SWING")) then
-                    spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
-                elseif (string.find(cle, "ENVIRONMENTAL")) then
-                    spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
-                else
-                    spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
-                end
-                self:DamageEvent(destGUID, spellID, amount, school, critical);
-            elseif(string.find(cle, "_MISSED")) then
-                local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+					if (string.find(cle, "SWING")) then
+						if destGUID == playerGUID then
+						  missType, isOffHand, amountMissed = ...;
+						else
+						  missType, isOffHand, amountMissed = "melee", ...;
+						end
+					else
+						spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+					end
+					self:MissEvent(destGUID, spellID, missType);
+				end
+			end
+		end
+	end
+	function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED ()
+		return NameplateSCT:CombatFilter(CombatLogGetCurrentEventInfo())
+	end
+else
+	function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED(event, time, cle, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, ...)
+		-- only use player events (or their pet/guardian)
+		if ((playerGUID == sourceGUID)
+			or (NameplateSCT.db.global.personal and playerGUID == destGUID)
+			or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then
+			local destUnit = guidToUnit[destGUID];
+			if (destUnit) or (destGUID == playerGUID) then
+				if (string.find(cle, "_DAMAGE")) then
+					local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
 
-                if (string.find(cle, "SWING")) then
-                    if destGUID == playerGUID then
-                      missType, isOffHand, amountMissed = ...;
-                    else
-                      missType, isOffHand, amountMissed = "melee", ...;
-                    end
-                else
-                    spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
-                end
-                self:MissEvent(destGUID, spellID, missType);
-            end
-        end
-    end
+					if (string.find(cle, "SWING")) then
+						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
+					elseif (string.find(cle, "ENVIRONMENTAL")) then
+						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+					else
+						spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
+					end
+					self:DamageEvent(destGUID, spellID, amount, school, critical);
+				elseif(string.find(cle, "_MISSED")) then
+					local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+
+					if (string.find(cle, "SWING")) then
+						if destGUID == playerGUID then
+						  missType, isOffHand, amountMissed = ...;
+						else
+						  missType, isOffHand, amountMissed = "melee", ...;
+						end
+					else
+						spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+					end
+					self:MissEvent(destGUID, spellID, missType);
+				end
+			end
+		end
+	end
 end
-
 
 -------------
 -- DISPLAY --
