@@ -596,14 +596,13 @@ end
 if CombatLogGetCurrentEventInfo then
 	function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
 		-- only use player events (or their pet/guardian)
-		if ((playerGUID == sourceGUID)
-			or (NameplateSCT.db.global.personal and playerGUID == destGUID)
-			or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then
+		if ((playerGUID == sourceGUID) -- Player events on Target only
+			or (NameplateSCT.db.global.personal and playerGUID == destGUID)  -- Incoming events on Player
+			or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then -- Pet/Guardian events
 			local destUnit = guidToUnit[destGUID];
-			if (destUnit) or (destGUID == playerGUID) then
+			if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 				if (string.find(clue, "_DAMAGE")) then
 					local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
-
 					if (string.find(clue, "SWING")) then
 						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
 					elseif (string.find(clue, "ENVIRONMENTAL")) then
