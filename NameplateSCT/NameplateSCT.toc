@@ -1,7 +1,7 @@
-## Interface: 70300
-## Version: 1.0
+## Interface: 80000
+## Version: 1.14
 ## Title: NameplateSCT
-## Author: mpstark
+## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
 ## Notes: Nameplate-based scrolling combat text.
 ## OptionalDeps: Ace3, LibEasing

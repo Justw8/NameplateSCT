@@ -58,12 +58,21 @@ local defaults = {
             crits = true,
             critsScale = 1.5,
 
+            miss = false,
+            missScale = 1.5,
+
             smallHits = true,
             smallHitsScale = 0.66,
         },
 
         animations = {
             normal = "fountain",
+            crit = "verticalUp",
+            miss = "verticalUp",
+        },
+
+        animationsPersonal = {
+            normal = "rainfall",
             crit = "verticalUp",
             miss = "verticalUp",
         },
@@ -118,6 +127,11 @@ local DAMAGE_TYPE_COLORS = {
     [SCHOOL_MASK_FROST] = "80FFFF",
     [SCHOOL_MASK_SHADOW] = "8080FF",
     [SCHOOL_MASK_ARCANE] = "FF80FF",
+	[SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW] = "A330C9", -- Chromatic
+	[SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW + SCHOOL_MASK_HOLY] = "A330C9", -- Magic
+	[SCHOOL_MASK_PHYSICAL + SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW + SCHOOL_MASK_HOLY] = "A330C9", -- Chaos
+	["melee"] = "FFFFFF",
+	["pet"] = "CC8400"
 };
 
 local MISS_EVENT_STRINGS = {
@@ -593,80 +607,69 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
         stopSavingNameplatePositions();
     end
 end
-if CombatLogGetCurrentEventInfo then
-	function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
-		-- only use player events (or their pet/guardian)
-		if ((playerGUID == sourceGUID) -- Player events on Target only
-			or (NameplateSCT.db.global.personal and playerGUID == destGUID)  -- Incoming events on Player
-			or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then -- Pet/Guardian events
-			local destUnit = guidToUnit[destGUID];
-			if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
-				if (string.find(clue, "_DAMAGE")) then
-					local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
-					if (string.find(clue, "SWING")) then
-						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
-					elseif (string.find(clue, "ENVIRONMENTAL")) then
-						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
-					else
-						spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
-					end
-					self:DamageEvent(destGUID, spellID, amount, school, critical);
-				elseif(string.find(clue, "_MISSED")) then
-					local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
 
-					if (string.find(clue, "SWING")) then
-						if destGUID == playerGUID then
-						  missType, isOffHand, amountMissed = ...;
-						else
-						  missType, isOffHand, amountMissed = "melee", ...;
-						end
-					else
-						spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
-					end
-					self:MissEvent(destGUID, spellID, missType);
+function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
+	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
+		local destUnit = guidToUnit[destGUID];
+		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
+			if (string.find(clue, "_DAMAGE")) then
+				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+				if (string.find(clue, "SWING")) then
+					spellName, amount, overkill, school_ignore, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
+				elseif (string.find(clue, "ENVIRONMENTAL")) then
+					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+				else
+					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
 				end
+				self:DamageEvent(destGUID, spellID, amount, school, critical, spellName);
+			elseif(string.find(clue, "_MISSED")) then
+				local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+
+				if (string.find(clue, "SWING")) then
+					if destGUID == playerGUID then
+					  missType, isOffHand, amountMissed = ...;
+					else
+					  missType, isOffHand, amountMissed = "melee", ...;
+					end
+				else
+					spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+				end
+				self:MissEvent(destGUID, spellID, missType);
+			end
+		end
+	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
+		local destUnit = guidToUnit[destGUID];
+		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
+			if (string.find(clue, "_DAMAGE")) then
+				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+				if (string.find(clue, "SWING")) then
+					spellName, amount, overkill, school_ignore, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "pet", ...;
+				elseif (string.find(clue, "ENVIRONMENTAL")) then
+					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+				else
+					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
+				end
+				self:DamageEvent(destGUID, spellID, amount, "pet", critical, spellName);
+			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
+				-- local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+
+				-- if (string.find(clue, "SWING")) then
+					-- if destGUID == playerGUID then
+					  -- missType, isOffHand, amountMissed = ...;
+					-- else
+					  -- missType, isOffHand, amountMissed = "pet", ...;
+					-- end
+				-- else
+					-- spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+				-- end
+				-- self:MissEvent(destGUID, spellID, missType);
 			end
 		end
 	end
-	function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED ()
-		return NameplateSCT:CombatFilter(CombatLogGetCurrentEventInfo())
-	end
-else
-	function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED(event, time, cle, hideCaster, sourceGUID, sourceName, sourceFlags, sourceRaidFlags, destGUID, destName, destFlags, destRaidFlags, ...)
-		-- only use player events (or their pet/guardian)
-		if ((playerGUID == sourceGUID)
-			or (NameplateSCT.db.global.personal and playerGUID == destGUID)
-			or (((bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0) or (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)) and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0)) then
-			local destUnit = guidToUnit[destGUID];
-			if (destUnit) or (destGUID == playerGUID) then
-				if (string.find(cle, "_DAMAGE")) then
-					local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+end
 
-					if (string.find(cle, "SWING")) then
-						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
-					elseif (string.find(cle, "ENVIRONMENTAL")) then
-						spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
-					else
-						spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
-					end
-					self:DamageEvent(destGUID, spellID, amount, school, critical);
-				elseif(string.find(cle, "_MISSED")) then
-					local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
-
-					if (string.find(cle, "SWING")) then
-						if destGUID == playerGUID then
-						  missType, isOffHand, amountMissed = ...;
-						else
-						  missType, isOffHand, amountMissed = "melee", ...;
-						end
-					else
-						spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
-					end
-					self:MissEvent(destGUID, spellID, missType);
-				end
-			end
-		end
-	end
+function NameplateSCT:COMBAT_LOG_EVENT_UNFILTERED ()
+	return NameplateSCT:CombatFilter(CombatLogGetCurrentEventInfo())
 end
 
 -------------
@@ -682,7 +685,7 @@ end
 local numDamageEvents = 0;
 local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
-function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
+function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
     local text, textWithoutIcons, animation, pow, size, icon, alpha;
     local frameLevel = FRAME_LEVEL_ABOVE;
 
@@ -702,10 +705,10 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
     -- select an animation
     if (crit) then
         frameLevel = FRAME_LEVEL_OVERLAY;
-        animation = self.db.global.animations.crit;
+        animation = guid ~= playerGUID and self.db.global.animations.crit or self.db.global.animationsPersonal.crit;
         pow = true;
     else
-        animation = self.db.global.animations.normal;
+        animation = guid ~= playerGUID and self.db.global.animations.normal or self.db.global.animationsPersonal.normal;
         pow = false;
     end
 
@@ -713,8 +716,14 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
         -- truncate
         if (self.db.global.truncate and amount >= 1000000 and self.db.global.truncateLetter) then
             text = string.format("%.1fM", amount / 1000000);
-        elseif (self.db.global.truncate and amount >= 1000) then
+		elseif (self.db.global.truncate and amount >= 10000) then
             text = string.format("%.0f", amount / 1000);
+
+            if (self.db.global.truncateLetter) then
+                text = text.."k";
+            end
+        elseif (self.db.global.truncate and amount >= 1000) then
+            text = string.format("%.1f", amount / 1000);
 
             if (self.db.global.truncateLetter) then
                 text = text.."k";
@@ -728,9 +737,11 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
         end
 
         -- color text
-        if (self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school]) then
+        if self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school] then
             text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.."|r";
-        else
+        elseif self.db.global.damageColor and spellName == "melee" and DAMAGE_TYPE_COLORS[spellName] then
+            text = "|Cff"..DAMAGE_TYPE_COLORS[spellName]..text.."|r";
+		else
             text = "|Cff"..self.db.global.defaultColor..text.."|r";
         end
 
@@ -758,7 +769,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
     end
 
     -- shrink small hits
-    if (self.db.global.sizing.smallHits) and not playerGUID == guid then
+    if (self.db.global.sizing.smallHits) and playerGUID ~= guid then
         if (not lastDamageEventTime or (lastDamageEventTime + SMALL_HIT_EXPIRY_WINDOW < GetTime())) then
             numDamageEvents = 0;
             runningAverageDamageEvents = 0;
@@ -775,7 +786,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit)
     end
 
     -- embiggen crit's size
-    if (self.db.global.sizing.crits and crit) and not playerGUID == guid then
+    if (self.db.global.sizing.crits and crit) and playerGUID ~= guid then
         size = size * self.db.global.sizing.critsScale;
     end
 
@@ -802,11 +813,16 @@ function NameplateSCT:MissEvent(guid, spellID, missType)
         alpha = self.db.global.formatting.alpha;
     end
 
+    -- embiggen miss size
+    if self.db.global.sizing.miss and playerGUID ~= guid then
+        size = size * self.db.global.sizing.missScale;
+    end
+
     if (icon == "only") then
         return;
     end
 
-    animation = self.db.global.animations.miss;
+    animation = playerGUID ~= guid and self.db.global.animations.miss or self.db.global.animationsPersonal.miss;
     pow = true;
 
     text = MISS_EVENT_STRINGS[missType] or "Missed";
@@ -966,6 +982,44 @@ local menu = {
                     desc = "",
                     get = function() return NameplateSCT.db.global.animations.miss; end,
                     set = function(_, newValue) NameplateSCT.db.global.animations.miss = newValue; end,
+                    values = animationValues,
+                    order = 3,
+                },
+            },
+        },
+
+        animationsPersonal = {
+            type = 'group',
+            name = "Personal SCT Animations",
+            order = 40,
+            inline = true,
+            hidden = function() return not NameplateSCT.db.global.personal; end,
+            disabled = function() return not NameplateSCT.db.global.enabled; end;
+            args = {
+                normal = {
+                    type = 'select',
+                    name = "Default",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.animationsPersonal.normal; end,
+                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.normal = newValue; end,
+                    values = animationValues,
+                    order = 1,
+                },
+                crit = {
+                    type = 'select',
+                    name = "Criticals",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.animationsPersonal.crit; end,
+                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.crit = newValue; end,
+                    values = animationValues,
+                    order = 2,
+                },
+                miss = {
+                    type = 'select',
+                    name = "Miss/Parry/Dodge/etc",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.animationsPersonal.miss; end,
+                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.miss = newValue; end,
                     values = animationValues,
                     order = 3,
                 },
@@ -1211,13 +1265,35 @@ local menu = {
                     width = "double",
                 },
 
+                miss = {
+                    type = 'toggle',
+                    name = "Embiggen Miss/Parry/Dodge/etc",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.sizing.miss; end,
+                    set = function(_, newValue) NameplateSCT.db.global.sizing.miss = newValue; end,
+                    order = 10,
+                },
+                missScale = {
+                    type = 'range',
+                    name = "Embiggen Miss/Parry/Dodge/etc Scale",
+                    desc = "",
+                    disabled = function() return not NameplateSCT.db.global.enabled or not NameplateSCT.db.global.sizing.miss; end,
+                    min = 1,
+                    max = 3,
+                    step = .01,
+                    get = function() return NameplateSCT.db.global.sizing.missScale; end,
+                    set = function(_, newValue) NameplateSCT.db.global.sizing.missScale = newValue; end,
+                    order = 11,
+                    width = "double",
+                },
+
                 smallHits = {
                     type = 'toggle',
                     name = "Scale Down Small Hits",
                     desc = "",
                     get = function() return NameplateSCT.db.global.sizing.smallHits; end,
                     set = function(_, newValue) NameplateSCT.db.global.sizing.smallHits = newValue; end,
-                    order = 10,
+                    order = 20,
                 },
                 smallHitsScale = {
                     type = 'range',
@@ -1229,7 +1305,7 @@ local menu = {
                     step = .01,
                     get = function() return NameplateSCT.db.global.sizing.smallHitsScale; end,
                     set = function(_, newValue) NameplateSCT.db.global.sizing.smallHitsScale = newValue; end,
-                    order = 11,
+                    order = 21,
                     width = "double",
                 },
             },
