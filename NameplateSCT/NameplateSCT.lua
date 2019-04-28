@@ -4,10 +4,70 @@
 local AceAddon = LibStub("AceAddon-3.0");
 local LibEasing = LibStub("LibEasing-1.0");
 local SharedMedia = LibStub("LibSharedMedia-3.0");
+local MSQ = LibStub("Masque", true);
 
 NameplateSCT = AceAddon:NewAddon("NameplateSCT", "AceConsole-3.0", "AceEvent-3.0");
 NameplateSCT.frame = CreateFrame("Frame", nil, UIParent);
 
+-------------
+-- OPTIONS --
+-------------
+local function rgbToHex(r, g, b)
+    return string.format("%02x%02x%02x", math.floor(255 * r), math.floor(255 * g), math.floor(255 * b));
+end
+
+local function hexToRGB(hex)
+    return tonumber(hex:sub(1,2), 16)/255, tonumber(hex:sub(3,4), 16)/255, tonumber(hex:sub(5,6), 16)/255, 1;
+end
+
+local iconValues = {
+    ["none"] = "No Icons",
+    ["left"] = "Left Side",
+    ["right"] = "Right Side",
+    ["both"] = "Both Sides",
+    ["only"] = "Icons Only (No Text)",
+};
+
+local animationValues = {
+    -- ["shake"] = "Shake",
+    ["verticalUp"] = "Vertical Up",
+    ["verticalDown"] = "Vertical Down",
+    ["fountain"] = "Fountain",
+    ["rainfall"] = "Rainfall",
+};
+
+local fontFlags = {
+    [""] = "None",
+    ["OUTLINE"] = "Outline",
+    ["THICKOUTLINE"] = "Thick Outline",
+    ["nil, MONOCHROME"] = "Monochrome",
+    ["OUTLINE , MONOCHROME"] = "Monochrome Outline",
+    ["THICKOUTLINE , MONOCHROME"] = "Monochrome Thick Outline",
+};
+
+local positionValues = {
+    ["TOP"] = "Top",
+    ["RIGHT"] = "Right",
+    ["BOTTOM"] = "Bottom",
+    ["LEFT"] = "Left",
+    ["TOPRIGHT"] = "Top Right",
+    ["TOPLEFT"] = "Top Left",
+    ["BOTTOMRIGHT"] = "Bottom Right",
+    ["BOTTOMLEFT"] = "Bottom Left",
+    ["CENTER"]  = "Center"
+}
+
+local inversePositions = {
+    ["BOTTOM"] = "TOP",
+    ["LEFT"] = "RIGHT",
+    ["TOP"] = "BOTTOM",
+    ["RIGHT"] = "LEFT",
+    ["TOPLEFT"] = "BOTTOMRIGHT",
+    ["TOPRIGHT"] = "BOTTOMLEFT",
+    ["BOTTOMLEFT"] = "TOPRIGHT",
+    ["BOTTOMRIGHT"] = "TOPLEFT",
+    ["CENTER"]  = "CENTER"
+}
 
 ------------
 -- LOCALS --
@@ -33,6 +93,11 @@ end
 --------
 -- DB --
 --------
+
+if MSQ then
+	NameplateSCT.frame.MSQGroup = MSQ:Group("NameplateSCT")
+end
+
 local defaultFont = "Friz Quadrata TT";
 if (SharedMedia:IsValid("font", "Bazooka")) then
     defaultFont = "Bazooka";
@@ -47,12 +112,21 @@ local defaults = {
         yOffsetPersonal = -100,
 
         font = defaultFont,
+        fontFlag = "OUTLINE",
+        fontShadow = false,
         damageColor = true,
         defaultColor = "ffff00",
 
         truncate = true,
         truncateLetter = true,
         commaSeperate = true,
+
+        showIcon = true,
+        enableMSQ = true,
+        iconScale = 100,
+        iconPosition = "RIGHT",
+        xOffsetIcon = 0,
+        yOffsetIcon = 0,
 
         sizing = {
             crits = true,
@@ -176,7 +250,8 @@ local function getFontString()
     end
 
     fontString:SetParent(NameplateSCT.frame);
-    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, "OUTLINE");
+    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
     fontString:SetAlpha(1);
     fontString:SetDrawLayer("OVERLAY");
     fontString:SetText("");
@@ -208,13 +283,87 @@ local function recycleFontString(fontString)
     fontString.pow = nil;
     fontString.startHeight = nil;
     fontString.NSCTFontSize = nil;
-    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, "OUTLINE");
-
+    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
     fontString:SetParent(NameplateSCT.frame);
 
     table.insert(fontStringCache, fontString);
 end
+-----------
+-- ICONS --
+-----------
 
+local iconCache = {};
+local function getIcon()
+    local icon;
+
+    if (next(iconCache)) then
+        icon = table.remove(iconCache);
+    else
+        icon = NameplateSCT.frame:CreateTexture();
+    end
+    
+    if MSQ and NameplateSCT.db.global.enableMSQ then
+        if not NameplateSCT.buttonFrame then 
+            NameplateSCT.buttonFrame = CreateFrame("Frame", nil, UIParent);
+            NameplateSCT.buttonFrame:SetFrameLevel(0)
+            NameplateSCT.buttonFrame:SetFrameStrata("BACKGROUND")
+        end
+        if not icon.button then
+            button = CreateFrame("Button", nil, NameplateSCT.buttonFrame)
+            button:EnableMouse(false);
+            button:Disable();
+            button:SetAllPoints();
+            button:SetSize(NameplateSCT.db.global.iconWidth,NameplateSCT.db.global.iconHeight);
+            
+            icon.button = button  
+            local buttonData = {
+                Icon = icon
+            }
+            NameplateSCT.frame.MSQGroup:AddButton(button, buttonData);
+        end
+    end
+
+    icon:SetAlpha(1);
+    icon:SetDrawLayer("BACKGROUND");
+    icon:Show();
+    icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+    icon:SetParent(NameplateSCT.frame)
+    if icon.button then 
+        icon.button:Show()
+        --icon:SetAllPoints(button)
+        --icon:SetParent(button);
+    --[[else
+        icon:SetAllPoints() 
+        --icon:SetParent(NameplateSCT.frame);]]
+    end
+    
+    return icon;
+end
+
+local function recycleIcon(icon)    
+    icon:ClearAllPoints();
+    icon:SetAlpha(0);
+    icon:Hide();
+    if icon.button then
+        icon.button:Hide();
+        icon.button:ClearAllPoints();
+        icon:SetAllPoints(button);
+    end
+
+    icon.anchorFrame = nil;
+    icon.unit = nil;
+    icon.guid = nil;
+    
+    --[[if icon.button then 
+        icon:SetAllPoints(button)
+        icon:SetParent(button);
+    else
+        icon:SetParent(NameplateSCT.frame);
+    end]]
+
+    table.insert(iconCache, icon);
+end
 
 ----------------
 -- NAMEPLATES --
@@ -237,6 +386,7 @@ local function saveNameplatePositions_Awful()
     end
 
     recycleFontString(fontString);
+    --if fontString.icon then recycleIcon(fontString.icon); end
 end
 
 local function startSavingNameplatePositions()
@@ -368,10 +518,12 @@ function NameplateSCT:OnDisable()
 
     for fontString, _ in pairs(animating) do
         recycleFontString(fontString);
+        if fontString.icon then recycleIcon(fontString.icon); end
     end
 
     self.db.global.enabled = false;
 end
+
 
 
 ---------------
@@ -441,6 +593,7 @@ local function AnimationOnUpdate()
             if (elapsed > fontString.animatingDuration) then
                 -- the animation is over
                 recycleFontString(fontString);
+                if fontString.icon then recycleIcon(fontString.icon); end
             else
                 local isTarget = false
                 if fontString.unit then
@@ -453,10 +606,16 @@ local function AnimationOnUpdate()
                     if (isTarget) then
                         if (fontString:GetParent() ~= targetFrames[fontString.frameLevel]) then
                             fontString:SetParent(targetFrames[fontString.frameLevel])
+                            if fontString.icon then 
+                                fontString.icon:SetParent(targetFrames[fontString.frameLevel])
+                            end
                         end
                     else
                         if (fontString:GetParent() ~= offTargetFrames[fontString.frameLevel]) then
                             fontString:SetParent(offTargetFrames[fontString.frameLevel])
+                            if fontString.icon then 
+                                fontString.icon:SetParent(offTargetFrames[fontString.frameLevel])
+                            end
                         end
                     end
                 end
@@ -477,11 +636,25 @@ local function AnimationOnUpdate()
 
                         local size = powSizing(elapsed, fontString.animatingDuration/6, fontString.startHeight/2, fontString.startHeight*2, fontString.startHeight);
                         fontString:SetTextHeight(size);
+
+                        if MSQ and NameplateSCT.db.global.enableMSQ then
+                            fontString.icon.button:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+                            NameplateSCT.frame.MSQGroup:ReSkin()
+                        else
+                            fontString.icon:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+                        end
                     else
                         fontString.pow = nil;
                         fontString:SetTextHeight(fontString.startHeight);
-                        fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, "OUTLINE");
+                        fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
+                        if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
                         fontString:SetText(fontString.NSCTText);
+                        if MSQ and NameplateSCT.db.global.enableMSQ then
+                            fontString.icon.button:SetSize(fontString.startHeight*NameplateSCT.db.global.iconScale/100, fontString.startHeight*NameplateSCT.db.global.iconScale/100);
+                            --NameplateSCT.frame.MSQGroup:ReSkin()
+                        else
+                            fontString.icon:SetSize(fontString.startHeight*NameplateSCT.db.global.iconScale/100, fontString.startHeight*NameplateSCT.db.global.iconScale/100);
+                        end
                     end
                 end
 
@@ -517,6 +690,7 @@ local function AnimationOnUpdate()
                     fontString:SetPoint("CENTER", UIParent, "BOTTOMLEFT", guidNameplatePositionX[fontString.guid] + NameplateSCT.db.global.xOffset + xOffset, guidNameplatePositionY[fontString.guid] + NameplateSCT.db.global.yOffset + yOffset);
                 else
                     recycleFontString(fontString);
+                    if fontString.icon then recycleIcon(fontString.icon); end
                 end
             end
         end
@@ -694,11 +868,9 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
 
     if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
-        icon = self.db.global.offTargetFormatting.icon;
         alpha = self.db.global.offTargetFormatting.alpha;
     else
         size = self.db.global.formatting.size;
-        icon = self.db.global.formatting.icon;
         alpha = self.db.global.formatting.alpha;
     end
 
@@ -745,26 +917,6 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
             text = "|Cff"..self.db.global.defaultColor..text.."|r";
         end
 
-        -- add icons
-        textWithoutIcons = text;
-        if (icon ~= "none" and spellID) then
-            local iconText = "|T"..GetSpellTexture(spellID)..":0|t";
-
-            if (icon == "both") then
-                text = iconText..text..iconText;
-            elseif (icon == "left") then
-                text = iconText..text;
-            elseif (icon == "right") then
-                text = text..iconText;
-            end
-        end
-    else
-        -- showing only icons
-        if (not spellID) then
-            return;
-        end
-
-        text = "|T"..GetSpellTexture(spellID)..":0|t";
         textWithoutIcons = text; -- since the icon is by itself, the fontString won't have the strange scaling bug
     end
 
@@ -794,8 +946,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
     if (size < 5) then
         size = 5;
     end
-
-    self:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow);
+    self:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow, spellID);
 end
 
 function NameplateSCT:MissEvent(guid, spellID, missType)
@@ -805,11 +956,9 @@ function NameplateSCT:MissEvent(guid, spellID, missType)
 
     if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
-        icon = self.db.global.offTargetFormatting.icon;
         alpha = self.db.global.offTargetFormatting.alpha;
     else
         size = self.db.global.formatting.size;
-        icon = self.db.global.formatting.icon;
         alpha = self.db.global.formatting.alpha;
     end
 
@@ -828,25 +977,12 @@ function NameplateSCT:MissEvent(guid, spellID, missType)
     text = MISS_EVENT_STRINGS[missType] or "Missed";
     text = "|Cff"..self.db.global.defaultColor..text.."|r";
 
-    -- add icons
-    local textWithoutIcons = text;
-    if (icon ~= "none" and spellID) then
-        local iconText = "|T"..GetSpellTexture(spellID)..":0|t";
-
-        if (icon == "both") then
-            text = iconText..text..iconText;
-        elseif (icon == "left") then
-            text = iconText..text;
-        elseif (icon == "right") then
-            text = text..iconText;
-        end
-    end
-
-    self:DisplayText(guid, text, textWithoutIcons, size, animation, FRAME_LEVEL_ABOVE, pow)
+    self:DisplayText(guid, text, textWithoutIcons, size, animation, FRAME_LEVEL_ABOVE, pow, spellID)
 end
 
-function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow)
+function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow, spellID)
     local fontString;
+    local icon;
     local unit = guidToUnit[guid];
     local nameplate;
 
@@ -861,14 +997,17 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
         return;
     end
 
-    fontString = getFontString();
 
+    
+    fontString = getFontString();
+    
     fontString.NSCTText = text;
     fontString.NSCTTextWithoutIcons = textWithoutIcons;
     fontString:SetText(fontString.NSCTText);
 
     fontString.NSCTFontSize = size;
-    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, "OUTLINE");
+    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
     fontString.startHeight = fontString:GetStringHeight();
     fontString.pow = pow;
     fontString.frameLevel = frameLevel;
@@ -879,38 +1018,37 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
 
     fontString.unit = unit;
     fontString.guid = guid;
-
+    if NameplateSCT.db.global.showIcon then 
+    icon = getIcon();
+    local texture;
+    local texture = GetSpellTexture(spellID);
+    if not texture then 
+        texture = GetSpellTexture(6603)
+    end
+    icon:SetTexture(texture);
+        if MSQ and NameplateSCT.db.global.enableMSQ then     
+            icon.button:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+            icon:SetAllPoints(icon.button)
+            NameplateSCT.frame.MSQGroup:ReSkin()
+            icon.button:SetPoint(
+                inversePositions[NameplateSCT.db.global.iconPosition], 
+                fontString, 
+                NameplateSCT.db.global.iconPosition, 
+                NameplateSCT.db.global.xOffsetIcon, 
+                NameplateSCT.db.global.yOffsetIcon
+            )
+        else
+            icon:SetSize(NameplateSCT.db.global.iconWidth,NameplateSCT.db.global.iconHeight);
+            icon:SetPoint(inversePositions[NameplateSCT.db.global.iconPosition], fontString, NameplateSCT.db.global.iconPosition, NameplateSCT.db.global.xOffsetIcon, NameplateSCT.db.global.yOffsetIcon)
+        end
+    fontString.icon = icon
+    local strata = icon.button:GetFrameStrata()
+    local level = icon.button:GetFrameLevel()
+    print(level, strata, icon:GetDrawLayer())
+    end
     -- if there is no nameplate,
     self:Animate(fontString, nameplate, ANIMATION_LENGTH, animation);
 end
-
-
--------------
--- OPTIONS --
--------------
-local function rgbToHex(r, g, b)
-    return string.format("%02x%02x%02x", math.floor(255 * r), math.floor(255 * g), math.floor(255 * b));
-end
-
-local function hexToRGB(hex)
-    return tonumber(hex:sub(1,2), 16)/255, tonumber(hex:sub(3,4), 16)/255, tonumber(hex:sub(5,6), 16)/255, 1;
-end
-
-local iconValues = {
-    ["none"] = "No Icons",
-    ["left"] = "Left Side",
-    ["right"] = "Right Side",
-    ["both"] = "Both Sides",
-    ["only"] = "Icons Only (No Text)",
-};
-
-local animationValues = {
-    -- ["shake"] = "Shake",
-    ["verticalUp"] = "Vertical Up",
-    ["verticalDown"] = "Vertical Down",
-    ["fountain"] = "Fountain",
-    ["rainfall"] = "Rainfall",
-};
 
 local menu = {
     name = "NameplateSCT",
@@ -1042,6 +1180,22 @@ local menu = {
                     get = function() return NameplateSCT.db.global.font; end,
                     set = function(_, newValue) NameplateSCT.db.global.font = newValue; end,
                 },
+                fontFlag = {
+                    type = 'select',
+                    name = "Font Flags",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.fontFlag; end,
+                    set = function(_, newValue) NameplateSCT.db.global.fontFlag = newValue; end,
+                    values = fontFlags,
+                    order = 2,
+                },
+                fontShadow = {
+                    type = 'toggle',
+                    name = "Text Shadow",
+                    get = function() return NameplateSCT.db.global.textShadow; end,
+                    set = function(_, newValue) NameplateSCT.db.global.textShadow = newValue end,
+                    order = 3,
+                },
 
                 damageColor = {
                     type = 'toggle',
@@ -1049,7 +1203,7 @@ local menu = {
                     desc = "",
                     get = function() return NameplateSCT.db.global.damageColor; end,
                     set = function(_, newValue) NameplateSCT.db.global.damageColor = newValue; end,
-                    order = 2,
+                    order = 4,
                 },
 
                 defaultColor = {
@@ -1059,7 +1213,7 @@ local menu = {
                     hasAlpha = false,
                     set = function(_, r, g, b) NameplateSCT.db.global.defaultColor = rgbToHex(r, g, b); end,
                     get = function() return hexToRGB(NameplateSCT.db.global.defaultColor); end,
-                    order = 3,
+                    order = 5,
                 },
 
                 xOffset = {
@@ -1114,6 +1268,82 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.yOffsetPersonal = newValue; end,
                     order = 12,
                     width = "full",
+                },
+            },
+        },
+
+        iconAppearance = {
+            type = 'group',
+            name = "Icon Appearance/Offsets",
+            order = 60,
+            inline = true,
+            disabled = function() return not NameplateSCT.db.global.enabled; end;
+            args = {
+                showIcon = {
+                    type = 'toggle',
+                    name = "Display Icon",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.showIcon; end,
+                    set = function(_, newValue) NameplateSCT.db.global.showIcon = newValue; end, 
+                    order = 1,
+                    width = "Half"
+                },
+                enableMSQ = {
+                    type = 'toggle',
+                    name = "Enable Masque",
+                    desc = "Let Masuqe skin the icons",
+                    hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                    get = function() return NameplateSCT.db.global.enableMSQ; end,
+                    set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue; end, 
+                    order = 2,
+                    width = "Half"
+                },
+                iconScale = {
+                    type = 'range', 
+                    name = "Icon Scale",
+                    --desc = "Scale of the spell icon",
+                    softMin = 50,
+                    softMax = 200,
+                    step = 1,
+                    hidden = function() return not NameplateSCT.db.global.showIcon; end, 
+                    get = function() return NameplateSCT.db.global.iconScale end, 
+                    set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue; end, 
+                    order = 3, 
+                    width = "Half"
+                },
+                iconPosition = {
+                    type = 'select',
+                    name = "Position",
+                    desc = "",
+                    hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                    get = function() return NameplateSCT.db.global.iconPosition or "Right"; end,
+                    set = function(_, newValue) NameplateSCT.db.global.iconPosition = newValue; end,
+                    values = positionValues,
+                    order = 6,
+                },
+                xOffsetIcon = {
+                    type = 'range',
+                    name = "Icon X Offset",
+                    hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                    softMin = -30,
+                    softMax = 30,
+                    step = 1,
+                    get = function() return NameplateSCT.db.global.xOffsetIcon or 0; end,
+                    set = function(_, newValue) NameplateSCT.db.global.xOffsetIcon = newValue; end,
+                    order = 7,
+                    width = "Half",
+                },
+                yOffsetIcon = {
+                    type = 'range',
+                    name = "Icon Y Offset",
+                    hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                    softMin = -30,
+                    softMax = 30,
+                    step = 1,
+                    get = function() return NameplateSCT.db.global.yOffsetIcon or 0; end,
+                    set = function(_, newValue) NameplateSCT.db.global.yOffsetIcon = newValue; end,
+                    order = 8,
+                    width = "Half",
                 },
             },
         },
