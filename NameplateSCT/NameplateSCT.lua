@@ -314,7 +314,7 @@ local function getIcon()
             button:EnableMouse(false);
             button:Disable();
             button:SetAllPoints();
-            button:SetSize(NameplateSCT.db.global.iconWidth,NameplateSCT.db.global.iconHeight);
+            --button:SetSize(NameplateSCT.db.global.iconWidth,NameplateSCT.db.global.iconHeight);
             
             icon.button = button  
             local buttonData = {
@@ -631,29 +631,31 @@ local function AnimationOnUpdate()
 
                 -- sizing
                 if (fontString.pow) then
+                    local iconScale = NameplateSCT.db.global.iconScale
+                    local height = fontString.startHeight
                     if (elapsed < fontString.animatingDuration/6) then
                         fontString:SetText(fontString.NSCTTextWithoutIcons);
 
-                        local size = powSizing(elapsed, fontString.animatingDuration/6, fontString.startHeight/2, fontString.startHeight*2, fontString.startHeight);
+                        local size = powSizing(elapsed, fontString.animatingDuration/6, height/2, height*2, height);
                         fontString:SetTextHeight(size);
 
                         if MSQ and NameplateSCT.db.global.enableMSQ then
-                            fontString.icon.button:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+                            fontString.icon.button:SetSize(size*iconScale/100, size*iconScale/100);
                             NameplateSCT.frame.MSQGroup:ReSkin()
                         else
-                            fontString.icon:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+                            fontString.icon:SetSize(size*iconScale/100, size*iconScale/100);
                         end
                     else
                         fontString.pow = nil;
-                        fontString:SetTextHeight(fontString.startHeight);
+                        fontString:SetTextHeight(height);
                         fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
                         if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
                         fontString:SetText(fontString.NSCTText);
                         if MSQ and NameplateSCT.db.global.enableMSQ then
-                            fontString.icon.button:SetSize(fontString.startHeight*NameplateSCT.db.global.iconScale/100, fontString.startHeight*NameplateSCT.db.global.iconScale/100);
+                            fontString.icon.button:SetSize(height*iconScale/100, height*iconScale/100);
                             --NameplateSCT.frame.MSQGroup:ReSkin()
                         else
-                            fontString.icon:SetSize(fontString.startHeight*NameplateSCT.db.global.iconScale/100, fontString.startHeight*NameplateSCT.db.global.iconScale/100);
+                            fontString.icon:SetSize(height*iconScale/100, height*iconScale/100);
                         end
                     end
                 end
@@ -1038,13 +1040,16 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
                 NameplateSCT.db.global.yOffsetIcon
             )
         else
-            icon:SetSize(NameplateSCT.db.global.iconWidth,NameplateSCT.db.global.iconHeight);
-            icon:SetPoint(inversePositions[NameplateSCT.db.global.iconPosition], fontString, NameplateSCT.db.global.iconPosition, NameplateSCT.db.global.xOffsetIcon, NameplateSCT.db.global.yOffsetIcon)
+            icon:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+            icon:SetPoint(
+                inversePositions[NameplateSCT.db.global.iconPosition], 
+                fontString, 
+                NameplateSCT.db.global.iconPosition, 
+                NameplateSCT.db.global.xOffsetIcon, 
+                NameplateSCT.db.global.yOffsetIcon
+            )
         end
     fontString.icon = icon
-    local strata = icon.button:GetFrameStrata()
-    local level = icon.button:GetFrameLevel()
-    print(level, strata, icon:GetDrawLayer())
     end
     -- if there is no nameplate,
     self:Animate(fontString, nameplate, ANIMATION_LENGTH, animation);
