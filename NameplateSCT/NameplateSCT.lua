@@ -153,14 +153,12 @@ local defaults = {
 
         formatting = {
             size = 20,
-            icon = "right",
             alpha = 1,
         },
 
         useOffTarget = true,
         offTargetFormatting = {
             size = 15,
-            icon = "right",
             alpha = 0.5,
         },
     },
@@ -1181,7 +1179,7 @@ local menu = {
                     type = 'toggle',
                     name = "Text Shadow",
                     get = function() return NameplateSCT.db.global.textShadow; end,
-                    set = function(_, newValue) NameplateSCT.db.global.textShadow = newValue end,
+                    set = function(_, newValue) NameplateSCT.db.global.textShadow = newValue; end,
                     order = 3,
                 },
 
@@ -1289,7 +1287,7 @@ local menu = {
                 iconScale = {
                     type = 'range', 
                     name = "Icon Scale",
-                    --desc = "Scale of the spell icon",
+                    desc = "Scale of the spell icon",
                     softMin = 50,
                     softMax = 200,
                     step = 1,
@@ -1369,16 +1367,6 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.commaSeperate = newValue; end,
                     order = 3,
                 },
-
-                icon = {
-                    type = 'select',
-                    name = "Icon",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.formatting.icon; end,
-                    set = function(_, newValue) NameplateSCT.db.global.formatting.icon = newValue; end,
-                    values = iconValues,
-                    order = 51,
-                },
                 size = {
                     type = 'range',
                     name = "Size",
@@ -1418,15 +1406,6 @@ local menu = {
                     order = 101,
                     inline = true,
                     args = {
-                        icon = {
-                            type = 'select',
-                            name = "Icon",
-                            desc = "",
-                            get = function() return NameplateSCT.db.global.offTargetFormatting.icon; end,
-                            set = function(_, newValue) NameplateSCT.db.global.offTargetFormatting.icon = newValue; end,
-                            values = iconValues,
-                            order = 1,
-                        },
                         size = {
                             type = 'range',
                             name = "Size",
