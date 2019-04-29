@@ -123,7 +123,7 @@ local defaults = {
 
         showIcon = true,
         enableMSQ = true,
-        iconScale = 100,
+        iconScale = 1,
         iconPosition = "RIGHT",
         xOffsetIcon = 0,
         yOffsetIcon = 0,
@@ -622,10 +622,10 @@ local function AnimationOnUpdate()
                         fontString:SetTextHeight(size);
 
                         if MSQ and NameplateSCT.db.global.enableMSQ then
-                            fontString.icon.button:SetSize(size*iconScale/100, size*iconScale/100);
+                            fontString.icon.button:SetSize(size*iconScale, size*iconScale);
                             NameplateSCT.frame.MSQGroup:ReSkin()
                         else
-                            fontString.icon:SetSize(size*iconScale/100, size*iconScale/100);
+                            fontString.icon:SetSize(size*iconScale, size*iconScale);
                         end
                     else
                         fontString.pow = nil;
@@ -634,10 +634,10 @@ local function AnimationOnUpdate()
                         if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
                         fontString:SetText(fontString.NSCTText);
                         if MSQ and NameplateSCT.db.global.enableMSQ then
-                            fontString.icon.button:SetSize(height*iconScale/100, height*iconScale/100);
+                            fontString.icon.button:SetSize(height*iconScale, height*iconScale);
                             --NameplateSCT.frame.MSQGroup:ReSkin()
                         else
-                            fontString.icon:SetSize(height*iconScale/100, height*iconScale/100);
+                            fontString.icon:SetSize(height*iconScale, height*iconScale);
                         end
                     end
                 end
@@ -1011,7 +1011,7 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
     end
     icon:SetTexture(texture);
         if MSQ and NameplateSCT.db.global.enableMSQ then     
-            icon.button:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+            icon.button:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
             icon.button:SetPoint(
                 inversePositions[NameplateSCT.db.global.iconPosition], 
                 fontString, 
@@ -1021,7 +1021,7 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
             )
             NameplateSCT.frame.MSQGroup:ReSkin()
         else
-            icon:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
+            icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
             icon:SetPoint(
                 inversePositions[NameplateSCT.db.global.iconPosition], 
                 fontString, 
@@ -1288,9 +1288,10 @@ local menu = {
                     type = 'range', 
                     name = "Icon Scale",
                     desc = "Scale of the spell icon",
-                    softMin = 50,
-                    softMax = 200,
-                    step = 1,
+                    softMin = 0.5,
+                    softMax = 2,
+                    isPercent = true,
+                    step = 0.01,
                     hidden = function() return not NameplateSCT.db.global.showIcon; end, 
                     get = function() return NameplateSCT.db.global.iconScale end, 
                     set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue; end, 
@@ -1340,6 +1341,7 @@ local menu = {
             order = 90,
             inline = true,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
+            width = "full",
             args = {
                 truncate = {
                     type = 'toggle',
@@ -1348,6 +1350,7 @@ local menu = {
                     get = function() return NameplateSCT.db.global.truncate; end,
                     set = function(_, newValue) NameplateSCT.db.global.truncate = newValue; end,
                     order = 1,
+                    width = "normal"
                 },
                 truncateLetter = {
                     type = 'toggle',
@@ -1357,6 +1360,7 @@ local menu = {
                     get = function() return NameplateSCT.db.global.truncateLetter; end,
                     set = function(_, newValue) NameplateSCT.db.global.truncateLetter = newValue; end,
                     order = 2,
+                    width = "normal"
                 },
                 commaSeperate = {
                     type = 'toggle',
@@ -1366,6 +1370,7 @@ local menu = {
                     get = function() return NameplateSCT.db.global.commaSeperate; end,
                     set = function(_, newValue) NameplateSCT.db.global.commaSeperate = newValue; end,
                     order = 3,
+                    width = "normal"
                 },
                 size = {
                     type = 'range',
@@ -1377,6 +1382,7 @@ local menu = {
                     get = function() return NameplateSCT.db.global.formatting.size; end,
                     set = function(_, newValue) NameplateSCT.db.global.formatting.size = newValue; end,
                     order = 52,
+                    width = "Half"
                 },
                 alpha = {
                     type = 'range',
@@ -1388,6 +1394,7 @@ local menu = {
                     get = function() return NameplateSCT.db.global.formatting.alpha; end,
                     set = function(_, newValue) NameplateSCT.db.global.formatting.alpha = newValue; end,
                     order = 53,
+                    width = "Half"
                 },
 
                 useOffTarget = {
@@ -1416,6 +1423,7 @@ local menu = {
                             get = function() return NameplateSCT.db.global.offTargetFormatting.size; end,
                             set = function(_, newValue) NameplateSCT.db.global.offTargetFormatting.size = newValue; end,
                             order = 2,
+                            width = "Half"
                         },
                         alpha = {
                             type = 'range',
@@ -1427,6 +1435,7 @@ local menu = {
                             get = function() return NameplateSCT.db.global.offTargetFormatting.alpha; end,
                             set = function(_, newValue) NameplateSCT.db.global.offTargetFormatting.alpha = newValue; end,
                             order = 3,
+                            width = "Half"
                         },
                     },
                 },
