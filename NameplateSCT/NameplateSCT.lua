@@ -313,9 +313,6 @@ local function getIcon()
             button = CreateFrame("Button", nil, NameplateSCT.buttonFrame)
             button:EnableMouse(false);
             button:Disable();
-            button:SetAllPoints();
-            --button:SetSize(NameplateSCT.db.global.iconWidth,NameplateSCT.db.global.iconHeight);
-            
             icon.button = button  
             local buttonData = {
                 Icon = icon
@@ -331,13 +328,7 @@ local function getIcon()
     icon:SetParent(NameplateSCT.frame)
     if icon.button then 
         icon.button:Show()
-        --icon:SetAllPoints(button)
-        --icon:SetParent(button);
-    --[[else
-        icon:SetAllPoints() 
-        --icon:SetParent(NameplateSCT.frame);]]
     end
-    
     return icon;
 end
 
@@ -354,13 +345,6 @@ local function recycleIcon(icon)
     icon.anchorFrame = nil;
     icon.unit = nil;
     icon.guid = nil;
-    
-    --[[if icon.button then 
-        icon:SetAllPoints(button)
-        icon:SetParent(button);
-    else
-        icon:SetParent(NameplateSCT.frame);
-    end]]
 
     table.insert(iconCache, icon);
 end
@@ -1030,8 +1014,6 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
     icon:SetTexture(texture);
         if MSQ and NameplateSCT.db.global.enableMSQ then     
             icon.button:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
-            icon:SetAllPoints(icon.button)
-            NameplateSCT.frame.MSQGroup:ReSkin()
             icon.button:SetPoint(
                 inversePositions[NameplateSCT.db.global.iconPosition], 
                 fontString, 
@@ -1039,6 +1021,7 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
                 NameplateSCT.db.global.xOffsetIcon, 
                 NameplateSCT.db.global.yOffsetIcon
             )
+            NameplateSCT.frame.MSQGroup:ReSkin()
         else
             icon:SetSize(size*NameplateSCT.db.global.iconScale/100, size*NameplateSCT.db.global.iconScale/100);
             icon:SetPoint(
