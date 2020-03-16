@@ -1,5 +1,5 @@
-## Interface: 80200
-## Version: 1.16
+## Interface: 11302
+## Version: 1.5
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
