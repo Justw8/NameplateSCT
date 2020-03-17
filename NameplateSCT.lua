@@ -99,6 +99,12 @@ local defaults = {
             icon = "right",
             alpha = 0.5,
         },
+
+        modOffTargetStrata = false,
+        strata = {
+            target = "HIGH",
+            offTarget = "MEDIUM",
+        },
     },
 };
 
@@ -161,6 +167,14 @@ local FRAME_LEVEL_OVERLAY = 3;
 local FRAME_LEVEL_ABOVE = 2;
 local FRAME_LEVEL_BELOW = 1;
 
+local STRATAS = {
+    "BACKGROUND",
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "DIALOG",
+    "TOOLTIP"
+};
 
 ----------------
 -- FONTSTRING --
@@ -234,18 +248,39 @@ end
 
 local function setNameplateFrameLevels()
     for _, frame in pairs(targetFrames) do
-        frame:SetFrameStrata("HIGH");
+        frame:SetFrameStrata(NameplateSCT.db.global.strata.target);
     end
     targetFrames[FRAME_LEVEL_OVERLAY]:SetFrameLevel(1001);
     targetFrames[FRAME_LEVEL_ABOVE]:SetFrameLevel(1000);
     targetFrames[FRAME_LEVEL_BELOW]:SetFrameLevel(999);
 
     for _, frame in pairs(offTargetFrames) do
-        frame:SetFrameStrata("MEDIUM");
+        frame:SetFrameStrata(NameplateSCT.db.global.strata.offTarget);
     end
     offTargetFrames[FRAME_LEVEL_OVERLAY]:SetFrameLevel(901);
     offTargetFrames[FRAME_LEVEL_ABOVE]:SetFrameLevel(900);
     offTargetFrames[FRAME_LEVEL_BELOW]:SetFrameLevel(899);
+end
+
+local function adjustStrata()
+    local offStrata;
+
+    if (NameplateSCT.db.global.modOffTargetStrata) then
+        return;
+    end
+
+    if (NameplateSCT.db.global.strata.target == "BACKGROUND") then
+        NameplateSCT.db.global.strata.offTarget = "BACKGROUND";
+        return;
+    else
+        for k, v in ipairs(STRATAS) do
+            if (v == NameplateSCT.db.global.strata.target) then
+                offStrata = STRATAS[k - 1];
+            end
+        end
+    end
+
+    NameplateSCT.db.global.strata.offTarget = offStrata;
 end
 
 ----------
@@ -856,6 +891,15 @@ local fontFlags = {
     ["OUTLINE , MONOCHROME"] = "Monochrome Outline",
     ["THICKOUTLINE , MONOCHROME"] = "Monochrome Thick Outline",
 };
+    
+local stratas = {
+    ["BACKGROUND"] = "Background",
+    ["LOW"] = "Low",
+    ["MEDIUM"] = "Medium",
+    ["HIGH"] = "High",
+    ["DIALOG"] = "Dialog",
+    ["TOOLTIP"] = "Tooltip",
+};
 
 local menu = {
     name = "NameplateSCT",
@@ -971,6 +1015,35 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.sizing.autoattackcritsizing = newValue; end,
                     order = 7,
                 },
+                modOffTargetStrata = {
+                    type = 'toggle',
+                    name = "Use Separate Off-Target Strata",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
+                    set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
+                    order = 8,
+                },
+
+                targetStrata = {
+                    type = 'select',
+                    name = "Target Strata",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.strata.target; end, 
+                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end, 
+                    values = stratas,
+                    order = 9,
+                },
+                
+                offTargetStrata = {
+                    type = 'select',
+                    name = "Off-Target Strata",
+                    desc = "",
+                    disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
+                    get = function() return NameplateSCT.db.global.strata.offTarget; end,
+                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end, 
+                    values = stratas,
+                    order = 10,
+                },
             },
         },
 
@@ -1061,7 +1134,7 @@ local menu = {
             order = 60,
             inline = true,
             hidden = function() return not NameplateSCT.db.global.personal; end,
-            disabled = function() return not NameplateSCT.db.global.enabled; end;
+            disabled = function() return not NameplateSCT.db.global.enabled; end,
             args = {
                 normalPersonal = {
                     type = 'select',
