@@ -1015,35 +1015,6 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.sizing.autoattackcritsizing = newValue; end,
                     order = 7,
                 },
-                modOffTargetStrata = {
-                    type = 'toggle',
-                    name = "Use Separate Off-Target Strata",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
-                    set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
-                    order = 8,
-                },
-
-                targetStrata = {
-                    type = 'select',
-                    name = "Target Strata",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.strata.target; end, 
-                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end, 
-                    values = stratas,
-                    order = 9,
-                },
-                
-                offTargetStrata = {
-                    type = 'select',
-                    name = "Off-Target Strata",
-                    desc = "",
-                    disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
-                    get = function() return NameplateSCT.db.global.strata.offTarget; end,
-                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end, 
-                    values = stratas,
-                    order = 10,
-                },
             },
         },
 
@@ -1124,6 +1095,36 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.yOffset = newValue; end,
                     order = 11,
                     width = "full",
+                },
+                
+                modOffTargetStrata = {
+                    type = 'toggle',
+                    name = "Use Separate Off-Target Strata",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
+                    set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
+                    order = 8,
+                },
+
+                targetStrata = {
+                    type = 'select',
+                    name = "Target Strata",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.strata.target; end, 
+                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end, 
+                    values = stratas,
+                    order = 9,
+                },
+                
+                offTargetStrata = {
+                    type = 'select',
+                    name = "Off-Target Strata",
+                    desc = "",
+                    disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
+                    get = function() return NameplateSCT.db.global.strata.offTarget; end,
+                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end, 
+                    values = stratas,
+                    order = 10,
                 },
             },
         },
