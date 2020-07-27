@@ -48,7 +48,11 @@ local defaults = {
 
         font = defaultFont,
         fontFlag = "OUTLINE",
-        fontShadow = false,
+        textShadow = false,
+        critFont = defaultFont,
+        critFontFlag = "OUTLINE",
+        critTextShadow = false,
+
         damageColor = true,
         defaultColor = "ffff00",
 
@@ -190,8 +194,8 @@ local function getFontPath(fontName)
 end
 
 local fontStringCache = {};
-local function getFontString()
-    local fontString;
+local function getFontString(pow)
+    local fontString, font, fontFlag;
 
     if (next(fontStringCache)) then
         fontString = table.remove(fontStringCache);
@@ -199,9 +203,11 @@ local function getFontString()
         fontString = NameplateSCT.frame:CreateFontString();
     end
 
+    font = (pow and NameplateSCT.db.global.critFont) or NameplateSCT.db.global.font
+    fontFlag = (pow and NameplateSCT.db.global.critFontFlag) or NameplateSCT.db.global.fontFlag
     fontString:SetParent(NameplateSCT.frame);
-    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+    fontString:SetFont(getFontPath(font), 15, fontFlag);
+    if (pow and NameplateSCT.db.global.critTextShadow) or (not pow and NameplateSCT.db.global.textShadow) then fontString:SetShadowOffset(1,-1) end
     fontString:SetAlpha(1);
     fontString:SetDrawLayer("OVERLAY");
     fontString:SetText("");
@@ -431,7 +437,7 @@ local function AnimationOnUpdate()
                     else
                         fontString.pow = nil;
                         fontString:SetTextHeight(fontString.startHeight);
-                        fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
+                        fontString:SetFont(getFontPath(NameplateSCT.db.global.critFont), fontString.NSCTFontSize, NameplateSCT.db.global.critFontFlag);
                         if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
                         fontString:SetText(fontString.NSCTText);
                     end
@@ -831,15 +837,17 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
         return;
     end
 
-    fontString = getFontString();
+    fontString = getFontString(pow);
 
     fontString.NSCTText = text;
     fontString.NSCTTextWithoutIcons = textWithoutIcons;
     fontString:SetText(fontString.NSCTText);
 
     fontString.NSCTFontSize = size;
-    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+    local font = pow and NameplateSCT.db.global.critFont or NameplateSCT.db.global.font
+    local fontFlag = pow and NameplateSCT.db.global.critFontFlag or NameplateSCT.db.global.fontFlag
+    fontString:SetFont(getFontPath(font), fontString.NSCTFontSize, fontFlag);
+    if (pow and NameplateSCT.db.global.critTextShadow) or (not pow and NameplateSCT.db.global.textShadow) then fontString:SetShadowOffset(1,-1) end
     fontString.startHeight = fontString:GetStringHeight();
     fontString.pow = pow;
     fontString.frameLevel = frameLevel;
@@ -891,7 +899,7 @@ local fontFlags = {
     ["OUTLINE , MONOCHROME"] = "Monochrome Outline",
     ["THICKOUTLINE , MONOCHROME"] = "Monochrome Thick Outline",
 };
-    
+
 local stratas = {
     ["BACKGROUND"] = "Background",
     ["LOW"] = "Low",
@@ -1050,6 +1058,31 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.textShadow = newValue end,
                     order = 3,
                 },
+                critFont = {
+                    type = "select",
+                    dialogControl = "LSM30_Font",
+                    name = "Crit Font",
+                    order = 4,
+                    values = AceGUIWidgetLSMlists.font,
+                    get = function() return NameplateSCT.db.global.critFont; end,
+                    set = function(_, newValue) NameplateSCT.db.global.critFont = newValue; end,
+                },
+                critFontFlag = {
+                    type = 'select',
+                    name = "Crit Font Flags",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.critFontFlag; end,
+                    set = function(_, newValue) NameplateSCT.db.global.critFontFlag = newValue; end,
+                    values = fontFlags,
+                    order = 5,
+                },
+                critFontShadow = {
+                    type = 'toggle',
+                    name = "Crit Text Shadow",
+                    get = function() return NameplateSCT.db.global.critTextShadow; end,
+                    set = function(_, newValue) NameplateSCT.db.global.critTextShadow = newValue end,
+                    order = 6,
+                },
 
                 damageColor = {
                     type = 'toggle',
@@ -1057,7 +1090,7 @@ local menu = {
                     desc = "",
                     get = function() return NameplateSCT.db.global.damageColor; end,
                     set = function(_, newValue) NameplateSCT.db.global.damageColor = newValue; end,
-                    order = 4,
+                    order = 7,
                 },
 
                 defaultColor = {
@@ -1068,7 +1101,7 @@ local menu = {
                     hasAlpha = false,
                     set = function(_, r, g, b) NameplateSCT.db.global.defaultColor = rgbToHex(r, g, b); end,
                     get = function() return hexToRGB(NameplateSCT.db.global.defaultColor); end,
-                    order = 5,
+                    order = 8,
                 },
 
                 xOffset = {
@@ -1096,7 +1129,7 @@ local menu = {
                     order = 11,
                     width = "full",
                 },
-                
+
                 modOffTargetStrata = {
                     type = 'toggle',
                     name = "Use Separate Off-Target Strata",
@@ -1110,19 +1143,19 @@ local menu = {
                     type = 'select',
                     name = "Target Strata",
                     desc = "",
-                    get = function() return NameplateSCT.db.global.strata.target; end, 
-                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end, 
+                    get = function() return NameplateSCT.db.global.strata.target; end,
+                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
                     values = stratas,
                     order = 9,
                 },
-                
+
                 offTargetStrata = {
                     type = 'select',
                     name = "Off-Target Strata",
                     desc = "",
                     disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
                     get = function() return NameplateSCT.db.global.strata.offTarget; end,
-                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end, 
+                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end,
                     values = stratas,
                     order = 10,
                 },
