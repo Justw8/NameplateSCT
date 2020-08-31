@@ -1184,7 +1184,7 @@ local menu = {
                     name = "Target Strata",
                     desc = "",
                     get = function() return NameplateSCT.db.global.strata.target; end,
-                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
+                    set = function(_, newValue) NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
                     values = stratas,
                     order = 9,
                 },
