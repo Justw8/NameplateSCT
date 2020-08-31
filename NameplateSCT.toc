@@ -1,5 +1,5 @@
-## Interface: 80000
-## Version: 1.14
+## Interface: 11302
+## Version: 1.5
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB

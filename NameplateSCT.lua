@@ -652,7 +652,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				else
 					spellID, spellName, _, amount, _, school, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, spellID, amount, school, critical, spellName);
+				self:DamageEvent(destGUID, nil, amount, school, critical, spellName);
 			elseif(string.find(clue, "_MISSED")) then
 				local spellID, spellName, missType;
 
@@ -680,7 +680,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				else
 					spellID, spellName, _, amount, _, _, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, spellID, amount, "pet", critical, spellName);
+				self:DamageEvent(destGUID, nil, amount, "pet", critical, spellName);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
 				-- local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
 
@@ -1171,6 +1171,94 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.yOffset = newValue; end,
                     order = 11,
                     width = "full",
+                },
+
+                modOffTargetStrata = {
+                    type = 'toggle',
+                    name = "Use Separate Off-Target Strata",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
+                    set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
+                    order = 8,
+                },
+
+                targetStrata = {
+                    type = 'select',
+                    name = "Target Strata",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.strata.target; end,
+                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
+                    values = stratas,
+                    order = 9,
+                },
+
+                offTargetStrata = {
+                    type = 'select',
+                    name = "Off-Target Strata",
+                    desc = "",
+                    disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
+                    get = function() return NameplateSCT.db.global.strata.offTarget; end,
+                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end,
+                    values = stratas,
+                    order = 10,
+                },
+            },
+        },
+
+        animationsPersonal = {
+            type = 'group',
+            name = "Personal SCT Animations",
+            order = 60,
+            inline = true,
+            hidden = function() return not NameplateSCT.db.global.personal; end,
+            disabled = function() return not NameplateSCT.db.global.enabled; end,
+            args = {
+                normalPersonal = {
+                    type = 'select',
+                    name = "Default",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.animationsPersonal.normal; end,
+                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.normal = newValue; end,
+                    values = animationValues,
+                    order = 5,
+                },
+                critPersonal = {
+                    type = 'select',
+                    name = "Criticals",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.animationsPersonal.crit; end,
+                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.crit = newValue; end,
+                    values = animationValues,
+                    order = 10,
+                },
+                missPersonal = {
+                    type = 'select',
+                    name = "Miss/Parry/Dodge/etc",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.animationsPersonal.miss; end,
+                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.miss = newValue; end,
+                    values = animationValues,
+                    order = 15,
+                },
+
+                damageColorPersonal = {
+                    type = 'toggle',
+                    name = "Use Damage Type Color",
+                    desc = "",
+                    get = function() return NameplateSCT.db.global.damageColorPersonal; end,
+                    set = function(_, newValue) NameplateSCT.db.global.damageColorPersonal = newValue; end,
+                    order = 40,
+                },
+
+                defaultColorPersonal = {
+                    type = 'color',
+                    name = "Default Color",
+                    desc = "",
+                    disabled = function() return NameplateSCT.db.global.damageColorPersonal; end,
+                    hasAlpha = false,
+                    set = function(_, r, g, b) NameplateSCT.db.global.defaultColorPersonal = rgbToHex(r, g, b); end,
+                    get = function() return hexToRGB(NameplateSCT.db.global.defaultColorPersonal); end,
+                    order = 45,
                 },
 
                 modOffTargetStrata = {
