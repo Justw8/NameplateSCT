@@ -38,14 +38,6 @@ local function hexToRGB(hex)
     return tonumber(hex:sub(1,2), 16)/255, tonumber(hex:sub(3,4), 16)/255, tonumber(hex:sub(5,6), 16)/255, 1;
 end
 
-local iconValues = {
-    ["none"] = "No Icons",
-    ["left"] = "Left Side",
-    ["right"] = "Right Side",
-    ["both"] = "Both Sides",
-    ["only"] = "Icons Only (No Text)",
-};
-
 local animationValues = {
     -- ["shake"] = "Shake",
     ["verticalUp"] = "Vertical Up",
@@ -309,72 +301,26 @@ local function recycleFontString(fontString)
     fontString.pow = nil;
     fontString.startHeight = nil;
     fontString.NSCTFontSize = nil;
+
+    fontString.icon:ClearAllPoints();
+    fontString.icon:SetAlpha(0);
+    fontString.icon:Hide();
+    if fontString.icon.button then
+        fontString.icon.button:Hide();
+        fontString.icon.button:ClearAllPoints();
+        fontString.icon:SetAllPoints(fontString.icon.button);
+    end
+
+    fontString.icon.anchorFrame = nil;
+    fontString.icon.unit = nil;
+    fontString.icon.guid = nil;
+
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
     if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
     fontString:SetParent(NameplateSCT.frame);
-	fontString:ClearAllPoints();
+    fontString:ClearAllPoints();
 
     table.insert(fontStringCache, fontString);
-end
-
------------
--- ICONS --
------------
-
-local iconCache = {};
-local function getIcon()
-    local icon;
-
-    if (next(iconCache)) then
-        icon = table.remove(iconCache);
-    else
-        icon = NameplateSCT.frame:CreateTexture();
-    end
-
-    if MSQ and NameplateSCT.db.global.enableMSQ then
-        if not NameplateSCT.buttonFrame then
-            NameplateSCT.buttonFrame = CreateFrame("Frame", nil, UIParent);
-            NameplateSCT.buttonFrame:SetFrameLevel(0)
-            NameplateSCT.buttonFrame:SetFrameStrata("BACKGROUND")
-        end
-        if not icon.button then
-            button = CreateFrame("Button", nil, NameplateSCT.buttonFrame)
-            button:EnableMouse(false);
-            button:Disable();
-            icon.button = button
-            local buttonData = {
-                Icon = icon
-            }
-            NameplateSCT.frame.MSQGroup:AddButton(button, buttonData);
-        end
-    end
-
-    icon:SetAlpha(1);
-    icon:SetDrawLayer("BACKGROUND");
-    icon:Show();
-    icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-    icon:SetParent(NameplateSCT.frame)
-    if icon.button then
-        icon.button:Show()
-    end
-    return icon;
-end
-
-local function recycleIcon(icon)
-    icon:ClearAllPoints();
-    icon:SetAlpha(0);
-    icon:Hide();
-    if icon.button then
-        icon.button:Hide();
-        icon.button:ClearAllPoints();
-        icon:SetAllPoints(button);
-    end
-
-    icon.anchorFrame = nil;
-    icon.unit = nil;
-    icon.guid = nil;
-
-    table.insert(iconCache, icon);
 end
 
 ----------------
@@ -454,7 +400,6 @@ function NameplateSCT:OnDisable()
 
     for fontString, _ in pairs(animating) do
         recycleFontString(fontString);
-		if fontString.icon then recycleIcon(fontString.icon); end
     end
 
     self.db.global.enabled = false;
@@ -528,7 +473,6 @@ local function AnimationOnUpdate()
             if (elapsed > fontString.animatingDuration) then
                 -- the animation is over
                 recycleFontString(fontString);
-				        if fontString.icon then recycleIcon(fontString.icon); end
             else
                 local isTarget = false
                 if fontString.unit then
@@ -569,7 +513,7 @@ local function AnimationOnUpdate()
                     local iconScale = NameplateSCT.db.global.iconScale
                     local height = fontString.startHeight
                     if (elapsed < fontString.animatingDuration/6) then
-                        fontString:SetText(fontString.NSCTTextWithoutIcons);
+                        fontString:SetText(fontString.NSCTText);
 
                         local size = powSizing(elapsed, fontString.animatingDuration/6, height/2, height*2, height);
                         fontString:SetTextHeight(size);
@@ -620,7 +564,7 @@ local function AnimationOnUpdate()
                     else -- nameplate frames
                       fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset, NameplateSCT.db.global.yOffset + yOffset);
                     end
-				else
+                  else
                     recycleFontString(fontString);
                 end
             end
@@ -640,7 +584,7 @@ function NameplateSCT:Animate(fontString, anchorFrame, duration, animation)
     fontString.animation = animation;
     fontString.animatingDuration = duration;
     fontString.animatingStartTime = GetTime();
-    fontString.anchorFrame = anchorFrame == player and UIParent or anchorFrame;
+    fontString.anchorFrame = anchorFrame == "player" and UIParent or anchorFrame;
 
     if (animation == "verticalUp") then
         fontString.distance = ANIMATION_VERTICAL_DISTANCE;
@@ -691,7 +635,6 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
 	for fontString, _ in pairs(animating) do
 		if fontString.unit == unitID then
 			recycleFontString(fontString);
-			if fontString.icon then recycleIcon(fontString.icon); end
 		end
     end
 end
@@ -701,41 +644,41 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+				local spellID, spellName, amount, school, critical;
 				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, school_ignore, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
+					spellName, amount, _, _, _, _, _, critical = "melee", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+					spellName, amount, _, school, _, _, _, critical = ...;
 				else
-					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
+					spellID, spellName, _, amount, _, school, _, _, _, critical = ...;
 				end
 				self:DamageEvent(destGUID, spellID, amount, school, critical, spellName);
 			elseif(string.find(clue, "_MISSED")) then
-				local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+				local spellID, spellName, missType;
 
 				if (string.find(clue, "SWING")) then
 					if destGUID == playerGUID then
-					  missType, isOffHand, amountMissed = ...;
+					  missType = ...;
 					else
-					  missType, isOffHand, amountMissed = "melee", ...;
+					  missType = "melee";
 					end
 				else
-					spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+					spellID, spellName, _, missType = ...;
 				end
-				self:MissEvent(destGUID, spellID, missType);
+				self:MissEvent(destGUID, spellID, missType, spellName);
 			end
 		end
 	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+				local spellID, spellName, amount, critical;
 				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, school_ignore, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "pet", ...;
+					spellName, amount, _, _, _, _, _, critical, _, _, _ = "pet", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+					spellName, amount, _, _, _, _, _, critical= ...;
 				else
-					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
+					spellID, spellName, _, amount, _, _, _, _, _, critical = ...;
 				end
 				self:DamageEvent(destGUID, spellID, amount, "pet", critical, spellName);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
@@ -774,7 +717,7 @@ local numDamageEvents = 0;
 local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
 function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
-    local text, textWithoutIcons, animation, pow, size, icon, alpha;
+    local text, animation, pow, size, alpha;
     local frameLevel = FRAME_LEVEL_ABOVE;
     local autoattack = not spellID;
 
@@ -890,10 +833,10 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
     if (size < 5) then
         size = 5;
     end
-    self:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow, spellName);
+    self:DisplayText(guid, text, size, animation, frameLevel, pow, spellName);
 end
 
-function NameplateSCT:MissEvent(guid, spellID, missType)
+function NameplateSCT:MissEvent(guid, spellID, missType, spellName)
     local text, animation, pow, size, icon, alpha, color;
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
@@ -930,10 +873,42 @@ function NameplateSCT:MissEvent(guid, spellID, missType)
     text = MISS_EVENT_STRINGS[missType] or "Missed";
     text = "|Cff"..color..text.."|r";
 
-    self:DisplayText(guid, text, textWithoutIcons, size, animation, FRAME_LEVEL_ABOVE, pow, spellName)
+    self:DisplayText(guid, text, size, animation, FRAME_LEVEL_ABOVE, pow, spellName)
 end
 
-function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow, spellName)
+local function getIcon()
+    local icon = NameplateSCT.frame:CreateTexture();
+
+    if MSQ and NameplateSCT.db.global.enableMSQ then
+        if not NameplateSCT.buttonFrame then
+            NameplateSCT.buttonFrame = CreateFrame("Frame", nil, UIParent);
+            NameplateSCT.buttonFrame:SetFrameLevel(0)
+            NameplateSCT.buttonFrame:SetFrameStrata("BACKGROUND")
+        end
+        if not icon.button then
+            local button = CreateFrame("Button", nil, NameplateSCT.buttonFrame)
+            button:EnableMouse(false);
+            button:Disable();
+            icon.button = button
+            local buttonData = {
+                Icon = icon
+            }
+            NameplateSCT.frame.MSQGroup:AddButton(button, buttonData);
+        end
+    end
+
+    icon:SetAlpha(1);
+    icon:SetDrawLayer("BACKGROUND");
+    icon:Show();
+    icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+    icon:SetParent(NameplateSCT.frame)
+    if icon.button then
+        icon.button:Show()
+    end
+    return icon;
+end
+
+function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, spellName)
     local fontString;
     local icon;
     local unit = guidToUnit[guid];
@@ -945,7 +920,7 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
 
     -- if there isn't an anchor frame, make sure that there is a guidNameplatePosition cache entry
     if playerGUID == guid and not unit then
-          nameplate = player
+          nameplate = "player"
     elseif (not nameplate) then
         return;
     end
@@ -953,7 +928,6 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
     fontString = getFontString();
 
     fontString.NSCTText = text;
-    fontString.NSCTTextWithoutIcons = textWithoutIcons;
     fontString:SetText(fontString.NSCTText);
 
     fontString.NSCTFontSize = size;
@@ -970,7 +944,6 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
     fontString.unit = unit;
     fontString.guid = guid;
 
-    local texture;
 		local texture = GetSpellTexture(spellName);
     if NameplateSCT.db.global.showIcon and texture then
       icon = getIcon();
