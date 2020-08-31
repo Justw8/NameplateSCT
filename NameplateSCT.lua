@@ -466,8 +466,8 @@ end
 
 local function AnimationOnUpdate()
     if (next(animating)) then
-        -- setNameplateFrameLevels();
-
+        -- setNameplateFrameLevels(); XXX needed here?
+        NameplateSCT.frame.MSQGroup:ReSkin()
         for fontString, _ in pairs(animating) do
             local elapsed = GetTime() - fontString.animatingStartTime;
             if (elapsed > fontString.animatingDuration) then
@@ -520,7 +520,6 @@ local function AnimationOnUpdate()
                         if fontString.icon then
                           if MSQ and NameplateSCT.db.global.enableMSQ then
                               fontString.icon.button:SetSize(size*iconScale, size*iconScale);
-                              NameplateSCT.frame.MSQGroup:ReSkin()
                           else
                               fontString.icon:SetSize(size*iconScale, size*iconScale);
                           end
@@ -534,7 +533,6 @@ local function AnimationOnUpdate()
                         if fontString.icon then
                           if MSQ and NameplateSCT.db.global.enableMSQ then
                               fontString.icon.button:SetSize(height*iconScale, height*iconScale);
-                              NameplateSCT.frame.MSQGroup:ReSkin()
                           else
                               fontString.icon:SetSize(height*iconScale, height*iconScale);
                           end
@@ -644,17 +642,17 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, amount, school, critical;
+				local spellName, amount, school, critical;
 				if (string.find(clue, "SWING")) then
 					spellName, amount, _, _, _, _, _, critical = "melee", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
 					spellName, amount, _, school, _, _, _, critical = ...;
 				else
-					spellID, spellName, _, amount, _, school, _, _, _, critical = ...;
+					_, spellName, _, amount, _, school, _, _, _, critical = ...;
 				end
 				self:DamageEvent(destGUID, nil, amount, school, critical, spellName);
 			elseif(string.find(clue, "_MISSED")) then
-				local spellID, spellName, missType;
+				local spellName, missType;
 
 				if (string.find(clue, "SWING")) then
 					if destGUID == playerGUID then
@@ -663,26 +661,26 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 					  missType = "melee";
 					end
 				else
-					spellID, spellName, _, missType = ...;
+					_, spellName, _, missType = ...;
 				end
-				self:MissEvent(destGUID, spellID, missType, spellName);
+				self:MissEvent(destGUID, nil, missType, spellName);
 			end
 		end
 	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, amount, critical;
+				local spellName, amount, critical;
 				if (string.find(clue, "SWING")) then
 					spellName, amount, _, _, _, _, _, critical, _, _, _ = "pet", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
 					spellName, amount, _, _, _, _, _, critical= ...;
 				else
-					spellID, spellName, _, amount, _, _, _, _, _, critical = ...;
+					_, spellName, _, amount, _, _, _, _, _, critical = ...;
 				end
 				self:DamageEvent(destGUID, nil, amount, "pet", critical, spellName);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
-				-- local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+				-- local spellName, spellSchool, missType, isOffHand, amountMissed;
 
 				-- if (string.find(clue, "SWING")) then
 					-- if destGUID == playerGUID then
@@ -691,9 +689,9 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 					  -- missType, isOffHand, amountMissed = "pet", ...;
 					-- end
 				-- else
-					-- spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+					-- _, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
 				-- end
-				-- self:MissEvent(destGUID, spellID, missType);
+				-- self:MissEvent(destGUID, nil, missType);
 			end
 		end
 	end
@@ -957,7 +955,6 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
         NameplateSCT.db.global.xOffsetIcon,
         NameplateSCT.db.global.yOffsetIcon
         )
-        NameplateSCT.frame.MSQGroup:ReSkin()
       else
         icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
         icon:SetPoint(
@@ -1202,170 +1199,82 @@ local menu = {
                     values = stratas,
                     order = 10,
                 },
-            },
-        },
-
-        animationsPersonal = {
-            type = 'group',
-            name = "Personal SCT Animations",
-            order = 60,
-            inline = true,
-            hidden = function() return not NameplateSCT.db.global.personal; end,
-            disabled = function() return not NameplateSCT.db.global.enabled; end,
-            args = {
-                normalPersonal = {
-                    type = 'select',
-                    name = "Default",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.animationsPersonal.normal; end,
-                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.normal = newValue; end,
-                    values = animationValues,
-                    order = 5,
+                iconAppearance = {
+                  type = 'group',
+                  name = "Icons",
+                  order = 60,
+                  inline = true,
+                  disabled = function() return not NameplateSCT.db.global.enabled; end;
+                  args = {
+                    showIcon = {
+                      type = 'toggle',
+                      name = "Display Icon",
+                      desc = "",
+                      get = function() return NameplateSCT.db.global.showIcon; end,
+                      set = function(_, newValue) NameplateSCT.db.global.showIcon = newValue; end,
+                      order = 1,
+                      width = "Half"
+                    },
+                    enableMSQ = {
+                      type = 'toggle',
+                      name = "Enable Masque",
+                      desc = "Let Masuqe skin the icons",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      get = function() return NameplateSCT.db.global.enableMSQ; end,
+                      set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue; end,
+                      order = 2,
+                      width = "Half"
+                    },
+                    iconScale = {
+                      type = 'range',
+                      name = "Icon Scale",
+                      desc = "Scale of the spell icon",
+                      softMin = 0.5,
+                      softMax = 2,
+                      isPercent = true,
+                      step = 0.01,
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      get = function() return NameplateSCT.db.global.iconScale end,
+                      set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue; end,
+                      order = 3,
+                      width = "Half"
+                    },
+                    iconPosition = {
+                      type = 'select',
+                      name = "Position",
+                      desc = "",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      get = function() return NameplateSCT.db.global.iconPosition or "Right"; end,
+                      set = function(_, newValue) NameplateSCT.db.global.iconPosition = newValue; end,
+                      values = positionValues,
+                      order = 6,
+                    },
+                    xOffsetIcon = {
+                      type = 'range',
+                      name = "Icon X Offset",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      softMin = -30,
+                      softMax = 30,
+                      step = 1,
+                      get = function() return NameplateSCT.db.global.xOffsetIcon or 0; end,
+                      set = function(_, newValue) NameplateSCT.db.global.xOffsetIcon = newValue; end,
+                      order = 7,
+                      width = "Half",
+                    },
+                    yOffsetIcon = {
+                      type = 'range',
+                      name = "Icon Y Offset",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      softMin = -30,
+                      softMax = 30,
+                      step = 1,
+                      get = function() return NameplateSCT.db.global.yOffsetIcon or 0; end,
+                      set = function(_, newValue) NameplateSCT.db.global.yOffsetIcon = newValue; end,
+                      order = 8,
+                      width = "Half",
+                    },
+                  },
                 },
-                critPersonal = {
-                    type = 'select',
-                    name = "Criticals",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.animationsPersonal.crit; end,
-                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.crit = newValue; end,
-                    values = animationValues,
-                    order = 10,
-                },
-                missPersonal = {
-                    type = 'select',
-                    name = "Miss/Parry/Dodge/etc",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.animationsPersonal.miss; end,
-                    set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.miss = newValue; end,
-                    values = animationValues,
-                    order = 15,
-                },
-
-                damageColorPersonal = {
-                    type = 'toggle',
-                    name = "Use Damage Type Color",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.damageColorPersonal; end,
-                    set = function(_, newValue) NameplateSCT.db.global.damageColorPersonal = newValue; end,
-                    order = 40,
-                },
-
-                defaultColorPersonal = {
-                    type = 'color',
-                    name = "Default Color",
-                    desc = "",
-                    disabled = function() return NameplateSCT.db.global.damageColorPersonal; end,
-                    hasAlpha = false,
-                    set = function(_, r, g, b) NameplateSCT.db.global.defaultColorPersonal = rgbToHex(r, g, b); end,
-                    get = function() return hexToRGB(NameplateSCT.db.global.defaultColorPersonal); end,
-                    order = 45,
-                },
-
-                modOffTargetStrata = {
-                    type = 'toggle',
-                    name = "Use Separate Off-Target Strata",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
-                    set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
-                    order = 8,
-                },
-
-                targetStrata = {
-                    type = 'select',
-                    name = "Target Strata",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.strata.target; end,
-                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
-                    values = stratas,
-                    order = 9,
-                },
-
-                offTargetStrata = {
-                    type = 'select',
-                    name = "Off-Target Strata",
-                    desc = "",
-                    disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
-                    get = function() return NameplateSCT.db.global.strata.offTarget; end,
-                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end,
-                    values = stratas,
-                    order = 10,
-                },
-				iconAppearance = {
-					type = 'group',
-					name = "Icon Appearance/Offsets",
-					order = 60,
-					inline = true,
-					disabled = function() return not NameplateSCT.db.global.enabled; end;
-					args = {
-						showIcon = {
-							type = 'toggle',
-							name = "Display Icon",
-							desc = "",
-							get = function() return NameplateSCT.db.global.showIcon; end,
-							set = function(_, newValue) NameplateSCT.db.global.showIcon = newValue; end,
-							order = 1,
-							width = "Half"
-						},
-						enableMSQ = {
-							type = 'toggle',
-							name = "Enable Masque",
-							desc = "Let Masuqe skin the icons",
-							hidden = function() return not NameplateSCT.db.global.showIcon; end,
-							get = function() return NameplateSCT.db.global.enableMSQ; end,
-							set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue; end,
-							order = 2,
-							width = "Half"
-						},
-						iconScale = {
-							type = 'range',
-							name = "Icon Scale",
-							desc = "Scale of the spell icon",
-							softMin = 0.5,
-							softMax = 2,
-							isPercent = true,
-							step = 0.01,
-							hidden = function() return not NameplateSCT.db.global.showIcon; end,
-							get = function() return NameplateSCT.db.global.iconScale end,
-							set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue; end,
-							order = 3,
-							width = "Half"
-						},
-						iconPosition = {
-							type = 'select',
-							name = "Position",
-							desc = "",
-							hidden = function() return not NameplateSCT.db.global.showIcon; end,
-							get = function() return NameplateSCT.db.global.iconPosition or "Right"; end,
-							set = function(_, newValue) NameplateSCT.db.global.iconPosition = newValue; end,
-							values = positionValues,
-							order = 6,
-						},
-						xOffsetIcon = {
-							type = 'range',
-							name = "Icon X Offset",
-							hidden = function() return not NameplateSCT.db.global.showIcon; end,
-							softMin = -30,
-							softMax = 30,
-							step = 1,
-							get = function() return NameplateSCT.db.global.xOffsetIcon or 0; end,
-							set = function(_, newValue) NameplateSCT.db.global.xOffsetIcon = newValue; end,
-							order = 7,
-							width = "Half",
-						},
-						yOffsetIcon = {
-							type = 'range',
-							name = "Icon Y Offset",
-							hidden = function() return not NameplateSCT.db.global.showIcon; end,
-							softMin = -30,
-							softMax = 30,
-							step = 1,
-							get = function() return NameplateSCT.db.global.yOffsetIcon or 0; end,
-							set = function(_, newValue) NameplateSCT.db.global.yOffsetIcon = newValue; end,
-							order = 8,
-							width = "Half",
-						},
-					},
-				},
             },
         },
 
