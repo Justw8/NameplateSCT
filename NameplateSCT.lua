@@ -20,16 +20,6 @@ local playerGUID;
 local unitToGuid = {};
 local guidToUnit = {};
 
-local targetFrames = {};
-for level = 1, 3 do
-    targetFrames[level] = CreateFrame("Frame", nil, UIParent);
-end
-
-local offTargetFrames = {};
-for level = 1, 3 do
-    offTargetFrames[level] = CreateFrame("Frame", nil, UIParent);
-end
-
 local function rgbToHex(r, g, b)
     return string.format("%02x%02x%02x", math.floor(255 * r), math.floor(255 * g), math.floor(255 * b));
 end
@@ -180,6 +170,7 @@ local defaults = {
 ---------------------
 -- LOCAL CONSTANTS --
 ---------------------
+
 local SMALL_HIT_EXPIRY_WINDOW = 30;
 local SMALL_HIT_MULTIPIER = 0.5;
 
@@ -200,8 +191,6 @@ local ANIMATION_RAINFALL_Y_MIN = 50;
 local ANIMATION_RAINFALL_Y_MAX = 100;
 local ANIMATION_RAINFALL_Y_START_MIN = 5
 local ANIMATION_RAINFALL_Y_START_MAX = 15;
-
--- local ANIMATION_LENGTH = 1; XXX Old default animation speed
 
 local DAMAGE_TYPE_COLORS = {
     [SCHOOL_MASK_PHYSICAL] = "FFFF00",
@@ -231,10 +220,6 @@ local MISS_EVENT_STRINGS = {
     ["RESIST"] = "Resisted",
 };
 
-local FRAME_LEVEL_OVERLAY = 3;
-local FRAME_LEVEL_ABOVE = 2;
-local FRAME_LEVEL_BELOW = 1;
-
 local STRATAS = {
     "BACKGROUND",
     "LOW",
@@ -258,23 +243,53 @@ local function getFontPath(fontName)
 end
 
 local fontStringCache = {};
+local frameCounter = 0
 local function getFontString()
     local fontString;
+    local fontStringFrame;
 
     if (next(fontStringCache)) then
         fontString = table.remove(fontStringCache);
     else
-        fontString = NameplateSCT.frame:CreateFontString();
+        frameCounter = frameCounter + 1
+        fontStringFrame = CreateFrame("Frame", nil, UIParent)
+        fontStringFrame:SetFrameStrata(NameplateSCT.db.global.strata.target);
+        fontStringFrame:SetFrameLevel(frameCounter);
+        fontString = fontStringFrame:CreateFontString();
+        fontString:SetParent(fontStringFrame);
     end
 
-    fontString:SetParent(NameplateSCT.frame);
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
     if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
     fontString:SetAlpha(1);
-    fontString:SetDrawLayer("OVERLAY");
+    fontString:SetDrawLayer("BACKGROUND");
     fontString:SetText("");
     fontString:Show();
 
+    if NameplateSCT.db.global.showIcon then
+      if not fontString.icon then
+        fontString.icon = NameplateSCT.frame:CreateTexture(nil, "BACKGROUND");
+      end
+      fontString.icon:SetAlpha(1);
+      fontString.icon:Show();
+      fontString.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+
+      if MSQ and NameplateSCT.db.global.enableMSQ then
+        if not fontString.icon.button then
+          local button = CreateFrame("Button", nil, fontStringFrame)
+          button:EnableMouse(false);
+          button:Disable();
+          fontString.icon.button = button
+        end
+        local buttonData = {
+            Icon = fontString.icon
+        }
+        NameplateSCT.frame.MSQGroup:AddButton(fontString.icon.button, buttonData);
+      end
+      if fontString.icon.button then
+          fontString.icon.button:Show()
+      end
+    end
     return fontString;
 end
 
@@ -302,22 +317,24 @@ local function recycleFontString(fontString)
     fontString.startHeight = nil;
     fontString.NSCTFontSize = nil;
 
-    fontString.icon:ClearAllPoints();
-    fontString.icon:SetAlpha(0);
-    fontString.icon:Hide();
-    if fontString.icon.button then
-        fontString.icon.button:Hide();
-        fontString.icon.button:ClearAllPoints();
-        fontString.icon:SetAllPoints(fontString.icon.button);
-    end
+    if fontString.icon then
+      fontString.icon:ClearAllPoints();
+      fontString.icon:SetAlpha(0);
+      fontString.icon:Hide();
+      if fontString.icon.button then
+          NameplateSCT.frame.MSQGroup:RemoveButton(fontString.icon.button)
+          fontString.icon.button:Hide();
+          fontString.icon.button:ClearAllPoints();
+          fontString.icon:SetAllPoints(fontString.icon.button);
+      end
 
-    fontString.icon.anchorFrame = nil;
-    fontString.icon.unit = nil;
-    fontString.icon.guid = nil;
+      fontString.icon.anchorFrame = nil;
+      fontString.icon.unit = nil;
+      fontString.icon.guid = nil;
+    end
 
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
     if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
-    fontString:SetParent(NameplateSCT.frame);
     fontString:ClearAllPoints();
 
     table.insert(fontStringCache, fontString);
@@ -326,22 +343,6 @@ end
 ----------------
 -- NAMEPLATES --
 ----------------
-
-local function setNameplateFrameLevels()
-    for _, frame in pairs(targetFrames) do
-        frame:SetFrameStrata(NameplateSCT.db.global.strata.target);
-    end
-    targetFrames[FRAME_LEVEL_OVERLAY]:SetFrameLevel(1001);
-    targetFrames[FRAME_LEVEL_ABOVE]:SetFrameLevel(1000);
-    targetFrames[FRAME_LEVEL_BELOW]:SetFrameLevel(999);
-
-    for _, frame in pairs(offTargetFrames) do
-        frame:SetFrameStrata(NameplateSCT.db.global.strata.offTarget);
-    end
-    offTargetFrames[FRAME_LEVEL_OVERLAY]:SetFrameLevel(901);
-    offTargetFrames[FRAME_LEVEL_ABOVE]:SetFrameLevel(900);
-    offTargetFrames[FRAME_LEVEL_BELOW]:SetFrameLevel(899);
-end
 
 local function adjustStrata()
     local offStrata;
@@ -376,8 +377,6 @@ function NameplateSCT:OnInitialize()
 
     -- setup menu
     self:RegisterMenu();
-
-    setNameplateFrameLevels();
 
     -- if the addon is turned off in db, turn it off
     if (self.db.global.enabled == false) then
@@ -466,8 +465,6 @@ end
 
 local function AnimationOnUpdate()
     if (next(animating)) then
-        -- setNameplateFrameLevels(); XXX needed here?
-        NameplateSCT.frame.MSQGroup:ReSkin()
         for fontString, _ in pairs(animating) do
             local elapsed = GetTime() - fontString.animatingStartTime;
             if (elapsed > fontString.animatingDuration) then
@@ -479,24 +476,6 @@ local function AnimationOnUpdate()
                   isTarget = UnitIsUnit(fontString.unit, "target");
                 else
                   fontString.unit = "player"
-                end
-                -- frame level
-                if (fontString.frameLevel) then
-                    if (isTarget) then
-                        if (fontString:GetParent() ~= targetFrames[fontString.frameLevel]) then
-                            fontString:SetParent(targetFrames[fontString.frameLevel])
-                            if fontString.icon then
-                                fontString.icon:SetParent(targetFrames[fontString.frameLevel])
-                            end
-                        end
-                    else
-                        if (fontString:GetParent() ~= offTargetFrames[fontString.frameLevel]) then
-                            fontString:SetParent(offTargetFrames[fontString.frameLevel])
-                            if fontString.icon then
-                                fontString.icon:SetParent(offTargetFrames[fontString.frameLevel])
-                            end
-                        end
-                    end
                 end
 
                 -- alpha
@@ -567,13 +546,14 @@ local function AnimationOnUpdate()
                 end
             end
         end
+        if MSQ and NameplateSCT.db.global.enableMSQ then
+          NameplateSCT.frame.MSQGroup:ReSkin()
+        end
     else
         -- nothing in the animation list, so just kill the onupdate
         NameplateSCT.frame:SetScript("OnUpdate", nil);
     end
 end
-
--- NameplateSCT.AnimationOnUpdate = AnimationOnUpdate;
 
 local arcDirection = 1;
 function NameplateSCT:Animate(fontString, anchorFrame, duration, animation)
@@ -629,7 +609,7 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     unitToGuid[unitID] = nil;
     guidToUnit[guid] = nil;
 
-	-- clear any fontStrings attachedk to this unit
+	-- recycle any fontStrings attachedk to this unit
 	for fontString, _ in pairs(animating) do
 		if fontString.unit == unitID then
 			recycleFontString(fontString);
@@ -716,19 +696,19 @@ local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
 function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
     local text, animation, pow, size, alpha;
-    local frameLevel = FRAME_LEVEL_ABOVE;
+    -- local frameLevel = FRAME_LEVEL_ABOVE;
     local autoattack = not spellID;
 
     -- select an animation
     if (autoattack and crit) then
-        frameLevel = FRAME_LEVEL_OVERLAY;
+        -- frameLevel = FRAME_LEVEL_OVERLAY;
         animation = guid ~= playerGUID and self.db.global.animations.autoattackcrit or self.db.global.animationsPersonal.crit;
         pow = true;
     elseif (autoattack) then
         animation = guid ~= playerGUID and self.db.global.animations.autoattack or self.db.global.animationsPersonal.normal;
         pow = false;
     elseif (crit) then
-        frameLevel = FRAME_LEVEL_OVERLAY;
+        -- frameLevel = FRAME_LEVEL_OVERLAY;
         animation = guid ~= playerGUID and self.db.global.animations.crit or self.db.global.animationsPersonal.crit;
         pow = true;
     elseif (not autoattack and not crit) then
@@ -775,7 +755,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
         end
     end
 
-        -- color text
+    -- color text
 		if guid ~= playerGUID then
 			if self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school] then
 				text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.."|r";
@@ -831,7 +811,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
     if (size < 5) then
         size = 5;
     end
-    self:DisplayText(guid, text, size, animation, frameLevel, pow, spellName);
+    self:DisplayText(guid, text, size, animation, nil, pow, spellName);
 end
 
 function NameplateSCT:MissEvent(guid, spellID, missType, spellName)
@@ -871,39 +851,7 @@ function NameplateSCT:MissEvent(guid, spellID, missType, spellName)
     text = MISS_EVENT_STRINGS[missType] or "Missed";
     text = "|Cff"..color..text.."|r";
 
-    self:DisplayText(guid, text, size, animation, FRAME_LEVEL_ABOVE, pow, spellName)
-end
-
-local function getIcon()
-    local icon = NameplateSCT.frame:CreateTexture();
-
-    if MSQ and NameplateSCT.db.global.enableMSQ then
-        if not NameplateSCT.buttonFrame then
-            NameplateSCT.buttonFrame = CreateFrame("Frame", nil, UIParent);
-            NameplateSCT.buttonFrame:SetFrameLevel(0)
-            NameplateSCT.buttonFrame:SetFrameStrata("BACKGROUND")
-        end
-        if not icon.button then
-            local button = CreateFrame("Button", nil, NameplateSCT.buttonFrame)
-            button:EnableMouse(false);
-            button:Disable();
-            icon.button = button
-            local buttonData = {
-                Icon = icon
-            }
-            NameplateSCT.frame.MSQGroup:AddButton(button, buttonData);
-        end
-    end
-
-    icon:SetAlpha(1);
-    icon:SetDrawLayer("BACKGROUND");
-    icon:Show();
-    icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-    icon:SetParent(NameplateSCT.frame)
-    if icon.button then
-        icon.button:Show()
-    end
-    return icon;
+    self:DisplayText(guid, text, size, animation, nil, pow, spellName)
 end
 
 function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, spellName)
@@ -944,7 +892,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
 
 		local texture = GetSpellTexture(spellName);
     if NameplateSCT.db.global.showIcon and texture then
-      icon = getIcon();
+      icon = fontString.icon;
       icon:SetTexture(texture);
       if MSQ and NameplateSCT.db.global.enableMSQ then
         icon.button:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
