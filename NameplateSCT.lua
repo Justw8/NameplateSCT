@@ -824,6 +824,19 @@ function NameplateSCT:MissEvent(guid, spellName, missType)
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
 
+    if playerGUID ~= guid then
+      animation = self.db.global.animations.miss
+      color = self.db.global.defaultColor
+    else
+      animation = self.db.global.animationsPersonal.miss
+      color = self.db.global.defaultColorPersonal
+    end
+
+    -- No animation set, cancel out
+    if (animation == "disabled") then
+      return;
+    end;
+
     if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
         alpha = self.db.global.offTargetFormatting.alpha;
@@ -836,14 +849,6 @@ function NameplateSCT:MissEvent(guid, spellName, missType)
     if self.db.global.sizing.miss and playerGUID ~= guid then
         size = size * self.db.global.sizing.missScale;
     end
-
-	if playerGUID ~= guid then
-		animation = self.db.global.animations.miss
-		color = self.db.global.defaultColor
-	else
-		animation = self.db.global.animationsPersonal.miss
-		color = self.db.global.defaultColorPersonal
-	end
 
     pow = true;
 
