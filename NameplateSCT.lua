@@ -917,9 +917,11 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
       end
       fontString.icon = icon
     else
-      fontString.icon:Hide();
-      if MSQ and NameplateSCT.db.global.enableMSQ then
-        fontString.icon.button:Hide()
+      if fontString.icon then
+        fontString.icon:Hide();
+        if MSQ and NameplateSCT.db.global.enableMSQ then
+          fontString.icon.button:Hide()
+        end
       end
     end
     self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation);
