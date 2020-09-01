@@ -4,6 +4,7 @@
 local AceAddon = LibStub("AceAddon-3.0");
 local LibEasing = LibStub("LibEasing-1.0");
 local SharedMedia = LibStub("LibSharedMedia-3.0");
+local MSQ = LibStub("Masque", true)
 
 NameplateSCT = AceAddon:NewAddon("NameplateSCT", "AceConsole-3.0", "AceEvent-3.0");
 NameplateSCT.frame = CreateFrame("Frame", nil, UIParent);
@@ -19,20 +20,72 @@ local playerGUID;
 local unitToGuid = {};
 local guidToUnit = {};
 
-local targetFrames = {};
-for level = 1, 3 do
-    targetFrames[level] = CreateFrame("Frame", nil, UIParent);
+local function rgbToHex(r, g, b)
+    return string.format("%02x%02x%02x", math.floor(255 * r), math.floor(255 * g), math.floor(255 * b));
 end
 
-local offTargetFrames = {};
-for level = 1, 3 do
-    offTargetFrames[level] = CreateFrame("Frame", nil, UIParent);
+local function hexToRGB(hex)
+    return tonumber(hex:sub(1,2), 16)/255, tonumber(hex:sub(3,4), 16)/255, tonumber(hex:sub(5,6), 16)/255, 1;
 end
 
+local animationValues = {
+    -- ["shake"] = "Shake",
+    ["verticalUp"] = "Vertical Up",
+    ["verticalDown"] = "Vertical Down",
+    ["fountain"] = "Fountain",
+    ["rainfall"] = "Rainfall",
+    ["disabled"] = "Disabled",
+};
+
+local fontFlags = {
+    [""] = "None",
+    ["OUTLINE"] = "Outline",
+    ["THICKOUTLINE"] = "Thick Outline",
+    ["nil, MONOCHROME"] = "Monochrome",
+    ["OUTLINE , MONOCHROME"] = "Monochrome Outline",
+    ["THICKOUTLINE , MONOCHROME"] = "Monochrome Thick Outline",
+};
+
+local stratas = {
+    ["BACKGROUND"] = "1. Background",
+    ["LOW"] = "2. Low",
+    ["MEDIUM"] = "3. Medium",
+    ["HIGH"] = "4. High",
+    ["DIALOG"] = "5. Dialog",
+    ["TOOLTIP"] = "6. Tooltip",
+};
+
+local positionValues = {
+    ["TOP"] = "Top",
+    ["RIGHT"] = "Right",
+    ["BOTTOM"] = "Bottom",
+    ["LEFT"] = "Left",
+    ["TOPRIGHT"] = "Top Right",
+    ["TOPLEFT"] = "Top Left",
+    ["BOTTOMRIGHT"] = "Bottom Right",
+    ["BOTTOMLEFT"] = "Bottom Left",
+    ["CENTER"]  = "Center"
+}
+
+local inversePositions = {
+    ["BOTTOM"] = "TOP",
+    ["LEFT"] = "RIGHT",
+    ["TOP"] = "BOTTOM",
+    ["RIGHT"] = "LEFT",
+    ["TOPLEFT"] = "BOTTOMRIGHT",
+    ["TOPRIGHT"] = "BOTTOMLEFT",
+    ["BOTTOMLEFT"] = "TOPRIGHT",
+    ["BOTTOMRIGHT"] = "TOPLEFT",
+    ["CENTER"]  = "CENTER"
+}
 
 --------
 -- DB --
 --------
+if MSQ then
+	NameplateSCT.frame.MSQGroup = MSQ:Group("NameplateSCT")
+end
+
 local defaultFont = "Friz Quadrata TT";
 if (SharedMedia:IsValid("font", "Bazooka")) then
     defaultFont = "Bazooka";
@@ -46,11 +99,24 @@ local defaults = {
         xOffsetPersonal = 0,
         yOffsetPersonal = -100,
 
+        modOffTargetStrata = false,
+        strata = {
+            target = "HIGH",
+            offTarget = "MEDIUM",
+        },
+
         font = defaultFont,
         fontFlag = "OUTLINE",
         fontShadow = false,
         damageColor = true,
         defaultColor = "ffff00",
+
+		    showIcon = true,
+        enableMSQ = true,
+        iconScale = 1,
+        iconPosition = "RIGHT",
+        xOffsetIcon = 0,
+        yOffsetIcon = 0,
 
         damageColorPersonal = false,
         defaultColorPersonal = "ff0000",
@@ -78,7 +144,7 @@ local defaults = {
             miss = "verticalUp",
             autoattack = "fountain",
             autoattackcrit = "verticalUp",
-			animationspeed = 1,
+            animationspeed = 1,
         },
 
         animationsPersonal = {
@@ -89,21 +155,13 @@ local defaults = {
 
         formatting = {
             size = 20,
-            icon = "right",
             alpha = 1,
         },
 
         useOffTarget = true,
         offTargetFormatting = {
             size = 15,
-            icon = "right",
             alpha = 0.5,
-        },
-
-        modOffTargetStrata = false,
-        strata = {
-            target = "HIGH",
-            offTarget = "MEDIUM",
         },
     },
 };
@@ -112,6 +170,7 @@ local defaults = {
 ---------------------
 -- LOCAL CONSTANTS --
 ---------------------
+
 local SMALL_HIT_EXPIRY_WINDOW = 30;
 local SMALL_HIT_MULTIPIER = 0.5;
 
@@ -132,8 +191,6 @@ local ANIMATION_RAINFALL_Y_MIN = 50;
 local ANIMATION_RAINFALL_Y_MAX = 100;
 local ANIMATION_RAINFALL_Y_START_MIN = 5
 local ANIMATION_RAINFALL_Y_START_MAX = 15;
-
--- local ANIMATION_LENGTH = 1; XXX Old default animation speed
 
 local DAMAGE_TYPE_COLORS = {
     [SCHOOL_MASK_PHYSICAL] = "FFFF00",
@@ -163,10 +220,6 @@ local MISS_EVENT_STRINGS = {
     ["RESIST"] = "Resisted",
 };
 
-local FRAME_LEVEL_OVERLAY = 3;
-local FRAME_LEVEL_ABOVE = 2;
-local FRAME_LEVEL_BELOW = 1;
-
 local STRATAS = {
     "BACKGROUND",
     "LOW",
@@ -190,23 +243,54 @@ local function getFontPath(fontName)
 end
 
 local fontStringCache = {};
+local frameCounter = 0
 local function getFontString()
     local fontString;
+    local fontStringFrame;
 
     if (next(fontStringCache)) then
         fontString = table.remove(fontStringCache);
     else
-        fontString = NameplateSCT.frame:CreateFontString();
+        frameCounter = frameCounter + 1
+        fontStringFrame = CreateFrame("Frame", nil, UIParent)
+        fontStringFrame:SetFrameStrata(NameplateSCT.db.global.strata.target);
+        fontStringFrame:SetFrameLevel(frameCounter);
+        fontString = fontStringFrame:CreateFontString();
+        fontString:SetParent(fontStringFrame);
     end
 
-    fontString:SetParent(NameplateSCT.frame);
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
     fontString:SetAlpha(1);
-    fontString:SetDrawLayer("OVERLAY");
+    fontString:SetDrawLayer("BACKGROUND");
     fontString:SetText("");
     fontString:Show();
 
+    if NameplateSCT.db.global.showIcon then
+      if not fontString.icon then
+        fontString.icon = NameplateSCT.frame:CreateTexture(nil, "BACKGROUND");
+      end
+      fontString.icon:SetAlpha(1);
+      fontString.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+      fontString.icon:Hide()
+
+      if MSQ and NameplateSCT.db.global.enableMSQ then
+        if not fontString.icon.button then
+          local button = CreateFrame("Button", nil, fontStringFrame)
+          button:EnableMouse(false);
+          button:Disable();
+          button:Hide()
+          fontString.icon.button = button
+        end
+        local buttonData = {
+            Icon = fontString.icon
+        }
+        NameplateSCT.frame.MSQGroup:AddButton(fontString.icon.button, buttonData);
+      end
+      if fontString.icon.button then
+          fontString.icon.button:Show()
+      end
+    end
     return fontString;
 end
 
@@ -233,34 +317,32 @@ local function recycleFontString(fontString)
     fontString.pow = nil;
     fontString.startHeight = nil;
     fontString.NSCTFontSize = nil;
+
+    if fontString.icon then
+      fontString.icon:ClearAllPoints();
+      fontString.icon:SetAlpha(0);
+      fontString.icon:Hide();
+      if fontString.icon.button then
+          NameplateSCT.frame.MSQGroup:RemoveButton(fontString.icon.button)
+          fontString.icon.button:Hide();
+          fontString.icon.button:ClearAllPoints();
+      end
+
+      fontString.icon.anchorFrame = nil;
+      fontString.icon.unit = nil;
+      fontString.icon.guid = nil;
+    end
+
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
-    fontString:SetParent(NameplateSCT.frame);
-	fontString:ClearAllPoints();
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
+    fontString:ClearAllPoints();
 
     table.insert(fontStringCache, fontString);
 end
 
-
 ----------------
 -- NAMEPLATES --
 ----------------
-
-local function setNameplateFrameLevels()
-    for _, frame in pairs(targetFrames) do
-        frame:SetFrameStrata(NameplateSCT.db.global.strata.target);
-    end
-    targetFrames[FRAME_LEVEL_OVERLAY]:SetFrameLevel(1001);
-    targetFrames[FRAME_LEVEL_ABOVE]:SetFrameLevel(1000);
-    targetFrames[FRAME_LEVEL_BELOW]:SetFrameLevel(999);
-
-    for _, frame in pairs(offTargetFrames) do
-        frame:SetFrameStrata(NameplateSCT.db.global.strata.offTarget);
-    end
-    offTargetFrames[FRAME_LEVEL_OVERLAY]:SetFrameLevel(901);
-    offTargetFrames[FRAME_LEVEL_ABOVE]:SetFrameLevel(900);
-    offTargetFrames[FRAME_LEVEL_BELOW]:SetFrameLevel(899);
-end
 
 local function adjustStrata()
     local offStrata;
@@ -295,8 +377,6 @@ function NameplateSCT:OnInitialize()
 
     -- setup menu
     self:RegisterMenu();
-
-    setNameplateFrameLevels();
 
     -- if the addon is turned off in db, turn it off
     if (self.db.global.enabled == false) then
@@ -385,8 +465,6 @@ end
 
 local function AnimationOnUpdate()
     if (next(animating)) then
-        -- setNameplateFrameLevels();
-
         for fontString, _ in pairs(animating) do
             local elapsed = GetTime() - fontString.animatingStartTime;
             if (elapsed > fontString.animatingDuration) then
@@ -399,17 +477,13 @@ local function AnimationOnUpdate()
                 else
                   fontString.unit = "player"
                 end
+
                 -- frame level
-                if (fontString.frameLevel) then
-                    if (isTarget) then
-                        if (fontString:GetParent() ~= targetFrames[fontString.frameLevel]) then
-                            fontString:SetParent(targetFrames[fontString.frameLevel])
-                        end
-                    else
-                        if (fontString:GetParent() ~= offTargetFrames[fontString.frameLevel]) then
-                            fontString:SetParent(offTargetFrames[fontString.frameLevel])
-                        end
-                    end
+                local frame = fontString:GetParent()
+                local currentStrata = frame:GetFrameStrata()
+                local strataRequired = (isTarget) and NameplateSCT.db.global.strata.target or NameplateSCT.db.global.strata.offTarget
+                if currentStrata ~= strataRequired then
+                  frame:SetFrameStrata(strataRequired)
                 end
 
                 -- alpha
@@ -423,17 +497,33 @@ local function AnimationOnUpdate()
 
                 -- sizing
                 if (fontString.pow) then
+                    local iconScale = NameplateSCT.db.global.iconScale
+                    local height = fontString.startHeight
                     if (elapsed < fontString.animatingDuration/6) then
-                        fontString:SetText(fontString.NSCTTextWithoutIcons);
+                        fontString:SetText(fontString.NSCTText);
 
-                        local size = powSizing(elapsed, fontString.animatingDuration/6, fontString.startHeight/2, fontString.startHeight*2, fontString.startHeight);
+                        local size = powSizing(elapsed, fontString.animatingDuration/6, height/2, height*2, height);
                         fontString:SetTextHeight(size);
+                        if fontString.icon then
+                          if MSQ and NameplateSCT.db.global.enableMSQ then
+                              fontString.icon.button:SetSize(size*iconScale, size*iconScale);
+                          else
+                              fontString.icon:SetSize(size*iconScale, size*iconScale);
+                          end
+                        end
                     else
                         fontString.pow = nil;
-                        fontString:SetTextHeight(fontString.startHeight);
+                        fontString:SetTextHeight(height);
                         fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
-                        if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+                        if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
                         fontString:SetText(fontString.NSCTText);
+                        if fontString.icon then
+                          if MSQ and NameplateSCT.db.global.enableMSQ then
+                              fontString.icon.button:SetSize(height*iconScale, height*iconScale);
+                          else
+                              fontString.icon:SetSize(height*iconScale, height*iconScale);
+                          end
+                        end
                     end
                 end
 
@@ -459,18 +549,19 @@ local function AnimationOnUpdate()
                     else -- nameplate frames
                       fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset, NameplateSCT.db.global.yOffset + yOffset);
                     end
-				else
+                  else
                     recycleFontString(fontString);
                 end
             end
+        end
+        if MSQ and NameplateSCT.db.global.enableMSQ then
+          NameplateSCT.frame.MSQGroup:ReSkin()
         end
     else
         -- nothing in the animation list, so just kill the onupdate
         NameplateSCT.frame:SetScript("OnUpdate", nil);
     end
 end
-
--- NameplateSCT.AnimationOnUpdate = AnimationOnUpdate;
 
 local arcDirection = 1;
 function NameplateSCT:Animate(fontString, anchorFrame, duration, animation)
@@ -479,7 +570,7 @@ function NameplateSCT:Animate(fontString, anchorFrame, duration, animation)
     fontString.animation = animation;
     fontString.animatingDuration = duration;
     fontString.animatingStartTime = GetTime();
-    fontString.anchorFrame = anchorFrame == player and UIParent or anchorFrame;
+    fontString.anchorFrame = anchorFrame == "player" and UIParent or anchorFrame;
 
     if (animation == "verticalUp") then
         fontString.distance = ANIMATION_VERTICAL_DISTANCE;
@@ -526,7 +617,7 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
     unitToGuid[unitID] = nil;
     guidToUnit[guid] = nil;
 
-	-- clear any fontStrings attachedk to this unit
+	-- recycle any fontStrings attachedk to this unit
 	for fontString, _ in pairs(animating) do
 		if fontString.unit == unitID then
 			recycleFontString(fontString);
@@ -539,45 +630,45 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+				local spellName, amount, school, critical;
 				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, school_ignore, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "melee", ...;
+					spellName, amount, _, _, _, _, _, critical = "melee", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+					spellName, amount, _, school, _, _, _, critical = ...;
 				else
-					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
+					_, spellName, _, amount, _, school, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, nil, amount, school, critical, spellName);
+				self:DamageEvent(destGUID, spellName, amount, school, critical);
 			elseif(string.find(clue, "_MISSED")) then
-				local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+				local spellName, missType;
 
 				if (string.find(clue, "SWING")) then
 					if destGUID == playerGUID then
-					  missType, isOffHand, amountMissed = ...;
+					  missType = ...;
 					else
-					  missType, isOffHand, amountMissed = "melee", ...;
+					  missType = "melee";
 					end
 				else
-					spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+					_, spellName, _, missType = ...;
 				end
-				self:MissEvent(destGUID, nil, missType);
+				self:MissEvent(destGUID, spellName, missType);
 			end
 		end
 	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand;
+				local spellName, amount, critical;
 				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, school_ignore, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = "pet", ...;
+					spellName, amount, _, _, _, _, _, critical, _, _, _ = "pet", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing = ...;
+					spellName, amount, _, _, _, _, _, critical= ...;
 				else
-					spellID, spellName, spellSchool, amount, overkill, school, resisted, blocked, absorbed, critical, glancing, crushing, isOffHand = ...;
+					_, spellName, _, amount, _, _, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, nil, amount, "pet", critical, spellName);
+				self:DamageEvent(destGUID, spellName, amount, "pet", critical);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
-				-- local spellID, spellName, spellSchool, missType, isOffHand, amountMissed;
+				-- local spellName, spellSchool, missType, isOffHand, amountMissed;
 
 				-- if (string.find(clue, "SWING")) then
 					-- if destGUID == playerGUID then
@@ -586,9 +677,9 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 					  -- missType, isOffHand, amountMissed = "pet", ...;
 					-- end
 				-- else
-					-- spellID, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+					-- _, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
 				-- end
-				-- self:MissEvent(destGUID, spellID, missType);
+				-- self:MissEvent(destGUID, spellName, missType);
 			end
 		end
 	end
@@ -611,21 +702,18 @@ end
 local numDamageEvents = 0;
 local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
-function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
-    local text, textWithoutIcons, animation, pow, size, icon, alpha;
-    local frameLevel = FRAME_LEVEL_ABOVE;
-    local autoattack = not spellID;
+function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit)
+    local text, animation, pow, size, alpha;
+    local autoattack = spellName == "melee" or spellName == "pet";
 
     -- select an animation
     if (autoattack and crit) then
-        frameLevel = FRAME_LEVEL_OVERLAY;
         animation = guid ~= playerGUID and self.db.global.animations.autoattackcrit or self.db.global.animationsPersonal.crit;
         pow = true;
     elseif (autoattack) then
         animation = guid ~= playerGUID and self.db.global.animations.autoattack or self.db.global.animationsPersonal.normal;
         pow = false;
     elseif (crit) then
-        frameLevel = FRAME_LEVEL_OVERLAY;
         animation = guid ~= playerGUID and self.db.global.animations.crit or self.db.global.animationsPersonal.crit;
         pow = true;
     elseif (not autoattack and not crit) then
@@ -643,39 +731,36 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
 
     if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
-        icon = self.db.global.offTargetFormatting.icon;
         alpha = self.db.global.offTargetFormatting.alpha;
     else
         size = self.db.global.formatting.size;
-        icon = self.db.global.formatting.icon;
         alpha = self.db.global.formatting.alpha;
     end
 
-    if (icon ~= "only") then
-        -- truncate
-        if (self.db.global.truncate and amount >= 1000000 and self.db.global.truncateLetter) then
-            text = string.format("%.1fM", amount / 1000000);
-		elseif (self.db.global.truncate and amount >= 10000) then
-            text = string.format("%.0f", amount / 1000);
+    -- truncate
+    if (self.db.global.truncate and amount >= 1000000 and self.db.global.truncateLetter) then
+        text = string.format("%.1fM", amount / 1000000);
+    elseif (self.db.global.truncate and amount >= 10000) then
+        text = string.format("%.0f", amount / 1000);
 
-            if (self.db.global.truncateLetter) then
-                text = text.."k";
-            end
-        elseif (self.db.global.truncate and amount >= 1000) then
-            text = string.format("%.1f", amount / 1000);
-
-            if (self.db.global.truncateLetter) then
-                text = text.."k";
-            end
-        else
-            if (self.db.global.commaSeperate) then
-                text = commaSeperate(amount);
-            else
-                text = tostring(amount);
-            end
+        if (self.db.global.truncateLetter) then
+            text = text.."k";
         end
+    elseif (self.db.global.truncate and amount >= 1000) then
+        text = string.format("%.1f", amount / 1000);
 
-        -- color text
+        if (self.db.global.truncateLetter) then
+            text = text.."k";
+        end
+    else
+        if (self.db.global.commaSeperate) then
+            text = commaSeperate(amount);
+        else
+            text = tostring(amount);
+        end
+    end
+
+    -- color text
 		if guid ~= playerGUID then
 			if self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school] then
 				text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.."|r";
@@ -693,31 +778,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
 				text = "|Cff"..self.db.global.defaultColorPersonal..text.."|r";
 			end
 		end
-        -- add icons
-        textWithoutIcons = text;
-        if (icon ~= "none" and spellName) then
-			local _, _, iconTexture = GetSpellInfo(spellName)
-			if iconTexture then
-				local iconText = "|T"..iconTexture..":0|t";
 
-				if (icon == "both") then
-					text = iconText..text..iconText;
-				elseif (icon == "left") then
-					text = iconText..text;
-				elseif (icon == "right") then
-					text = text..iconText;
-				end
-			end
-        end
-    else
-        -- showing only icons
-        if (not spellID) then
-            return;
-        end
-
-        text = "|T"..GetSpellTexture(spellID)..":0|t";
-        textWithoutIcons = text; -- since the icon is by itself, the fontString won't have the strange scaling bug
-    end
 
     -- shrink small hits
     if (self.db.global.sizing.smallHits or self.db.global.sizing.smallHitsHide) and playerGUID ~= guid then
@@ -755,31 +816,25 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
     if (size < 5) then
         size = 5;
     end
-    self:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow);
+    self:DisplayText(guid, text, size, animation, nil, pow, spellName);
 end
 
-function NameplateSCT:MissEvent(guid, spellID, missType)
-    local text, animation, pow, size, icon, alpha, color;
+function NameplateSCT:MissEvent(guid, spellName, missType)
+    local text, animation, pow, size, alpha, color;
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
 
     if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
-        icon = self.db.global.offTargetFormatting.icon;
         alpha = self.db.global.offTargetFormatting.alpha;
     else
         size = self.db.global.formatting.size;
-        icon = self.db.global.formatting.icon;
         alpha = self.db.global.formatting.alpha;
     end
 
     -- embiggen miss size
     if self.db.global.sizing.miss and playerGUID ~= guid then
         size = size * self.db.global.sizing.missScale;
-    end
-
-    if (icon == "only") then
-        return;
     end
 
 	if playerGUID ~= guid then
@@ -795,28 +850,12 @@ function NameplateSCT:MissEvent(guid, spellID, missType)
     text = MISS_EVENT_STRINGS[missType] or "Missed";
     text = "|Cff"..color..text.."|r";
 
-    -- add icons
-    local textWithoutIcons = text;
-    if (icon ~= "none" and spellName) then
-		local _, _, iconTexture = GetSpellInfo(spellName)
-		if iconTexture then
-			local iconText = "|T"..iconTexture..":0|t";
-
-			if (icon == "both") then
-				text = iconText..text..iconText;
-			elseif (icon == "left") then
-				text = iconText..text;
-			elseif (icon == "right") then
-				text = text..iconText;
-			end
-		end
-    end
-
-    self:DisplayText(guid, text, textWithoutIcons, size, animation, FRAME_LEVEL_ABOVE, pow)
+    self:DisplayText(guid, text, size, animation, nil, pow, spellName)
 end
 
-function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation, frameLevel, pow)
+function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, spellName)
     local fontString;
+    local icon;
     local unit = guidToUnit[guid];
     local nameplate;
 
@@ -826,7 +865,7 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
 
     -- if there isn't an anchor frame, make sure that there is a guidNameplatePosition cache entry
     if playerGUID == guid and not unit then
-          nameplate = player
+          nameplate = "player"
     elseif (not nameplate) then
         return;
     end
@@ -834,12 +873,11 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
     fontString = getFontString();
 
     fontString.NSCTText = text;
-    fontString.NSCTTextWithoutIcons = textWithoutIcons;
     fontString:SetText(fontString.NSCTText);
 
     fontString.NSCTFontSize = size;
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
     fontString.startHeight = fontString:GetStringHeight();
     fontString.pow = pow;
     fontString.frameLevel = frameLevel;
@@ -851,6 +889,40 @@ function NameplateSCT:DisplayText(guid, text, textWithoutIcons, size, animation,
     fontString.unit = unit;
     fontString.guid = guid;
 
+		local texture = GetSpellTexture(spellName);
+    if NameplateSCT.db.global.showIcon and texture then
+      icon = fontString.icon;
+      icon:Show();
+      icon:SetTexture(texture);
+      if MSQ and NameplateSCT.db.global.enableMSQ then
+        icon.button:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
+        icon.button:SetPoint(
+        inversePositions[NameplateSCT.db.global.iconPosition],
+        fontString,
+        NameplateSCT.db.global.iconPosition,
+        NameplateSCT.db.global.xOffsetIcon,
+        NameplateSCT.db.global.yOffsetIcon
+        )
+        icon.button:Show()
+      else
+        icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
+        icon:SetPoint(
+        inversePositions[NameplateSCT.db.global.iconPosition],
+        fontString,
+        NameplateSCT.db.global.iconPosition,
+        NameplateSCT.db.global.xOffsetIcon,
+        NameplateSCT.db.global.yOffsetIcon
+        )
+      end
+      fontString.icon = icon
+    else
+      if fontString.icon then
+        fontString.icon:Hide();
+        if MSQ and NameplateSCT.db.global.enableMSQ then
+          fontString.icon.button:Hide()
+        end
+      end
+    end
     self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation);
 end
 
@@ -858,48 +930,6 @@ end
 -------------
 -- OPTIONS --
 -------------
-local function rgbToHex(r, g, b)
-    return string.format("%02x%02x%02x", math.floor(255 * r), math.floor(255 * g), math.floor(255 * b));
-end
-
-local function hexToRGB(hex)
-    return tonumber(hex:sub(1,2), 16)/255, tonumber(hex:sub(3,4), 16)/255, tonumber(hex:sub(5,6), 16)/255, 1;
-end
-
-local iconValues = {
-    ["none"] = "No Icons",
-    ["left"] = "Left Side",
-    ["right"] = "Right Side",
-    ["both"] = "Both Sides",
-    ["only"] = "Icons Only (No Text)",
-};
-
-local animationValues = {
-    -- ["shake"] = "Shake",
-    ["verticalUp"] = "Vertical Up",
-    ["verticalDown"] = "Vertical Down",
-    ["fountain"] = "Fountain",
-    ["rainfall"] = "Rainfall",
-    ["disabled"] = "Disabled",
-};
-
-local fontFlags = {
-    [""] = "None",
-    ["OUTLINE"] = "Outline",
-    ["THICKOUTLINE"] = "Thick Outline",
-    ["nil, MONOCHROME"] = "Monochrome",
-    ["OUTLINE , MONOCHROME"] = "Monochrome Outline",
-    ["THICKOUTLINE , MONOCHROME"] = "Monochrome Thick Outline",
-};
-    
-local stratas = {
-    ["BACKGROUND"] = "Background",
-    ["LOW"] = "Low",
-    ["MEDIUM"] = "Medium",
-    ["HIGH"] = "High",
-    ["DIALOG"] = "Dialog",
-    ["TOOLTIP"] = "Tooltip",
-};
 
 local menu = {
     name = "NameplateSCT",
@@ -918,7 +948,7 @@ local menu = {
 
         disableBlizzardFCT = {
             type = 'toggle',
-            name = "BlizzardSCT (Game>Combat>Show Target Damage)",
+            name = "BlizzardSCT",
             get = function(_, newValue) return GetCVar("floatingCombatTextCombatDamage") == "1" end,
             set = function(_, newValue)
                 if (newValue) then
@@ -928,7 +958,6 @@ local menu = {
                 end
             end,
             order = 3,
-			disabled = true,
             width = "double",
         },
 
@@ -1096,7 +1125,7 @@ local menu = {
                     order = 11,
                     width = "full",
                 },
-                
+
                 modOffTargetStrata = {
                     type = 'toggle',
                     name = "Use Separate Off-Target Strata",
@@ -1110,21 +1139,97 @@ local menu = {
                     type = 'select',
                     name = "Target Strata",
                     desc = "",
-                    get = function() return NameplateSCT.db.global.strata.target; end, 
-                    set = function(_, newValue) print('uwu', newValue); NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end, 
+                    get = function() return NameplateSCT.db.global.strata.target; end,
+                    set = function(_, newValue) NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
                     values = stratas,
                     order = 9,
                 },
-                
+
                 offTargetStrata = {
                     type = 'select',
                     name = "Off-Target Strata",
                     desc = "",
                     disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
                     get = function() return NameplateSCT.db.global.strata.offTarget; end,
-                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end, 
+                    set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end,
                     values = stratas,
                     order = 10,
+                },
+                iconAppearance = {
+                  type = 'group',
+                  name = "Icons",
+                  order = 60,
+                  inline = true,
+                  disabled = function() return not NameplateSCT.db.global.enabled; end;
+                  args = {
+                    showIcon = {
+                      type = 'toggle',
+                      name = "Display Icon",
+                      desc = "",
+                      get = function() return NameplateSCT.db.global.showIcon; end,
+                      set = function(_, newValue) NameplateSCT.db.global.showIcon = newValue; end,
+                      order = 1,
+                      width = "Half"
+                    },
+                    enableMSQ = {
+                      type = 'toggle',
+                      name = "Enable Masque",
+                      desc = "Let Masuqe skin the icons",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      get = function() return NameplateSCT.db.global.enableMSQ; end,
+                      set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue; end,
+                      order = 2,
+                      width = "Half"
+                    },
+                    iconScale = {
+                      type = 'range',
+                      name = "Icon Scale",
+                      desc = "Scale of the spell icon",
+                      softMin = 0.5,
+                      softMax = 2,
+                      isPercent = true,
+                      step = 0.01,
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      get = function() return NameplateSCT.db.global.iconScale end,
+                      set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue; end,
+                      order = 3,
+                      width = "Half"
+                    },
+                    iconPosition = {
+                      type = 'select',
+                      name = "Position",
+                      desc = "",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      get = function() return NameplateSCT.db.global.iconPosition or "Right"; end,
+                      set = function(_, newValue) NameplateSCT.db.global.iconPosition = newValue; end,
+                      values = positionValues,
+                      order = 6,
+                    },
+                    xOffsetIcon = {
+                      type = 'range',
+                      name = "Icon X Offset",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      softMin = -30,
+                      softMax = 30,
+                      step = 1,
+                      get = function() return NameplateSCT.db.global.xOffsetIcon or 0; end,
+                      set = function(_, newValue) NameplateSCT.db.global.xOffsetIcon = newValue; end,
+                      order = 7,
+                      width = "Half",
+                    },
+                    yOffsetIcon = {
+                      type = 'range',
+                      name = "Icon Y Offset",
+                      hidden = function() return not NameplateSCT.db.global.showIcon; end,
+                      softMin = -30,
+                      softMax = 30,
+                      step = 1,
+                      get = function() return NameplateSCT.db.global.yOffsetIcon or 0; end,
+                      set = function(_, newValue) NameplateSCT.db.global.yOffsetIcon = newValue; end,
+                      order = 8,
+                      width = "Half",
+                    },
+                  },
                 },
             },
         },
@@ -1248,16 +1353,6 @@ local menu = {
                     set = function(_, newValue) NameplateSCT.db.global.commaSeperate = newValue; end,
                     order = 3,
                 },
-
-                icon = {
-                    type = 'select',
-                    name = "Icon",
-                    desc = "",
-                    get = function() return NameplateSCT.db.global.formatting.icon; end,
-                    set = function(_, newValue) NameplateSCT.db.global.formatting.icon = newValue; end,
-                    values = iconValues,
-                    order = 51,
-                },
                 size = {
                     type = 'range',
                     name = "Size",
@@ -1271,7 +1366,7 @@ local menu = {
                 },
                 alpha = {
                     type = 'range',
-                    name = "Start Alpha",
+                    name = "Alpha",
                     desc = "",
                     min = 0.1,
                     max = 1,
@@ -1297,15 +1392,6 @@ local menu = {
                     order = 101,
                     inline = true,
                     args = {
-                        icon = {
-                            type = 'select',
-                            name = "Icon",
-                            desc = "",
-                            get = function() return NameplateSCT.db.global.offTargetFormatting.icon; end,
-                            set = function(_, newValue) NameplateSCT.db.global.offTargetFormatting.icon = newValue; end,
-                            values = iconValues,
-                            order = 1,
-                        },
                         size = {
                             type = 'range',
                             name = "Size",
@@ -1319,7 +1405,7 @@ local menu = {
                         },
                         alpha = {
                             type = 'range',
-                            name = "Start Alpha",
+                            name = "Alpha",
                             desc = "",
                             min = 0.1,
                             max = 1,
