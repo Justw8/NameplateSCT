@@ -138,7 +138,7 @@ local defaults = {
             miss = "verticalUp",
             autoattack = "fountain",
             autoattackcrit = "verticalUp",
-			animationspeed = 1,
+            animationspeed = 1,
         },
 
         animationsPersonal = {
@@ -820,27 +820,21 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit)
 end
 
 function NameplateSCT:MissEvent(guid, spellName, missType)
-    local text, animation, pow, size, icon, alpha, color;
+    local text, animation, pow, size, alpha, color;
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
 
     if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
         size = self.db.global.offTargetFormatting.size;
-        icon = self.db.global.offTargetFormatting.icon;
         alpha = self.db.global.offTargetFormatting.alpha;
     else
         size = self.db.global.formatting.size;
-        icon = self.db.global.formatting.icon;
         alpha = self.db.global.formatting.alpha;
     end
 
     -- embiggen miss size
     if self.db.global.sizing.miss and playerGUID ~= guid then
         size = size * self.db.global.sizing.missScale;
-    end
-
-    if (icon == "only") then
-        return;
     end
 
 	if playerGUID ~= guid then
