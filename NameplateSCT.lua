@@ -478,6 +478,14 @@ local function AnimationOnUpdate()
                   fontString.unit = "player"
                 end
 
+                -- frame level
+                local frame = fontString:GetParent()
+                local currentStrata = frame:GetFrameStrata()
+                local strataRequired = (isTarget) and NameplateSCT.db.global.strata.target or NameplateSCT.db.global.strata.offTarget
+                if currentStrata ~= strataRequired then
+                  frame:SetFrameStrata(strataRequired)
+                end
+
                 -- alpha
                 local startAlpha = NameplateSCT.db.global.formatting.alpha;
                 if (NameplateSCT.db.global.useOffTarget and not isTarget and fontString.unit ~= "player") then
@@ -696,19 +704,16 @@ local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
 function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
     local text, animation, pow, size, alpha;
-    -- local frameLevel = FRAME_LEVEL_ABOVE;
     local autoattack = not spellID;
 
     -- select an animation
     if (autoattack and crit) then
-        -- frameLevel = FRAME_LEVEL_OVERLAY;
         animation = guid ~= playerGUID and self.db.global.animations.autoattackcrit or self.db.global.animationsPersonal.crit;
         pow = true;
     elseif (autoattack) then
         animation = guid ~= playerGUID and self.db.global.animations.autoattack or self.db.global.animationsPersonal.normal;
         pow = false;
     elseif (crit) then
-        -- frameLevel = FRAME_LEVEL_OVERLAY;
         animation = guid ~= playerGUID and self.db.global.animations.crit or self.db.global.animationsPersonal.crit;
         pow = true;
     elseif (not autoattack and not crit) then
