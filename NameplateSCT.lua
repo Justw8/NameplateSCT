@@ -47,12 +47,12 @@ local fontFlags = {
 };
 
 local stratas = {
-    ["BACKGROUND"] = "Background",
-    ["LOW"] = "Low",
-    ["MEDIUM"] = "Medium",
-    ["HIGH"] = "High",
-    ["DIALOG"] = "Dialog",
-    ["TOOLTIP"] = "Tooltip",
+    ["BACKGROUND"] = "1. Background",
+    ["LOW"] = "2. Low",
+    ["MEDIUM"] = "3. Medium",
+    ["HIGH"] = "4. High",
+    ["DIALOG"] = "5. Dialog",
+    ["TOOLTIP"] = "6. Tooltip",
 };
 
 local positionValues = {
@@ -638,7 +638,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				else
 					_, spellName, _, amount, _, school, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, nil, amount, school, critical, spellName);
+				self:DamageEvent(destGUID, spellName, amount, school, critical);
 			elseif(string.find(clue, "_MISSED")) then
 				local spellName, missType;
 
@@ -651,7 +651,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				else
 					_, spellName, _, missType = ...;
 				end
-				self:MissEvent(destGUID, nil, missType, spellName);
+				self:MissEvent(destGUID, spellName, missType);
 			end
 		end
 	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
@@ -666,7 +666,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				else
 					_, spellName, _, amount, _, _, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, nil, amount, "pet", critical, spellName);
+				self:DamageEvent(destGUID, spellName, amount, "pet", critical);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
 				-- local spellName, spellSchool, missType, isOffHand, amountMissed;
 
@@ -679,7 +679,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				-- else
 					-- _, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
 				-- end
-				-- self:MissEvent(destGUID, nil, missType);
+				-- self:MissEvent(destGUID, spellName, missType);
 			end
 		end
 	end
@@ -702,9 +702,9 @@ end
 local numDamageEvents = 0;
 local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
-function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName)
+function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit)
     local text, animation, pow, size, alpha;
-    local autoattack = not spellID;
+    local autoattack = spellName == "melee" or spellName == "pet";
 
     -- select an animation
     if (autoattack and crit) then
@@ -819,7 +819,7 @@ function NameplateSCT:DamageEvent(guid, spellID, amount, school, crit, spellName
     self:DisplayText(guid, text, size, animation, nil, pow, spellName);
 end
 
-function NameplateSCT:MissEvent(guid, spellID, missType, spellName)
+function NameplateSCT:MissEvent(guid, spellName, missType)
     local text, animation, pow, size, icon, alpha, color;
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
