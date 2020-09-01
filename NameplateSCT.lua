@@ -99,6 +99,12 @@ local defaults = {
         xOffsetPersonal = 0,
         yOffsetPersonal = -100,
 
+        modOffTargetStrata = false,
+        strata = {
+            target = "HIGH",
+            offTarget = "MEDIUM",
+        },
+
         font = defaultFont,
         fontFlag = "OUTLINE",
         fontShadow = false,
@@ -156,12 +162,6 @@ local defaults = {
         offTargetFormatting = {
             size = 15,
             alpha = 0.5,
-        },
-
-        modOffTargetStrata = false,
-        strata = {
-            target = "HIGH",
-            offTarget = "MEDIUM",
         },
     },
 };
@@ -260,7 +260,7 @@ local function getFontString()
     end
 
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
     fontString:SetAlpha(1);
     fontString:SetDrawLayer("BACKGROUND");
     fontString:SetText("");
@@ -334,7 +334,7 @@ local function recycleFontString(fontString)
     end
 
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
     fontString:ClearAllPoints();
 
     table.insert(fontStringCache, fontString);
@@ -515,7 +515,7 @@ local function AnimationOnUpdate()
                         fontString.pow = nil;
                         fontString:SetTextHeight(height);
                         fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
-                        if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+                        if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
                         fontString:SetText(fontString.NSCTText);
                         if fontString.icon then
                           if MSQ and NameplateSCT.db.global.enableMSQ then
@@ -877,7 +877,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
 
     fontString.NSCTFontSize = size;
     fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
-    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) end
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
     fontString.startHeight = fontString:GetStringHeight();
     fontString.pow = pow;
     fontString.frameLevel = frameLevel;
