@@ -271,14 +271,15 @@ local function getFontString()
         fontString.icon = NameplateSCT.frame:CreateTexture(nil, "BACKGROUND");
       end
       fontString.icon:SetAlpha(1);
-      fontString.icon:Show();
       fontString.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+      fontString.icon:Hide()
 
       if MSQ and NameplateSCT.db.global.enableMSQ then
         if not fontString.icon.button then
           local button = CreateFrame("Button", nil, fontStringFrame)
           button:EnableMouse(false);
           button:Disable();
+          button:Hide()
           fontString.icon.button = button
         end
         local buttonData = {
@@ -893,6 +894,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
 		local texture = GetSpellTexture(spellName);
     if NameplateSCT.db.global.showIcon and texture then
       icon = fontString.icon;
+      icon:Show();
       icon:SetTexture(texture);
       if MSQ and NameplateSCT.db.global.enableMSQ then
         icon.button:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
@@ -903,6 +905,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
         NameplateSCT.db.global.xOffsetIcon,
         NameplateSCT.db.global.yOffsetIcon
         )
+        icon.button:Show()
       else
         icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
         icon:SetPoint(
