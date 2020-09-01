@@ -326,7 +326,6 @@ local function recycleFontString(fontString)
           NameplateSCT.frame.MSQGroup:RemoveButton(fontString.icon.button)
           fontString.icon.button:Hide();
           fontString.icon.button:ClearAllPoints();
-          fontString.icon:SetAllPoints(fontString.icon.button);
       end
 
       fontString.icon.anchorFrame = nil;
@@ -917,6 +916,11 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
         )
       end
       fontString.icon = icon
+    else
+      fontString.icon:Hide();
+      if MSQ and NameplateSCT.db.global.enableMSQ then
+        fontString.icon.button:Hide()
+      end
     end
     self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation);
 end
