@@ -96,6 +96,7 @@ local defaults = {
         enabled = true,
         xOffset = 0,
         yOffset = 0,
+        personalOnly = false,
         xOffsetPersonal = 0,
         yOffsetPersonal = -100,
 
@@ -626,6 +627,7 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
 end
 
 function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
+  if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and playerGUID ~= destGUID then return end -- Cancel out any non player targetted abilities if you have personalSCT only enabled
 	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
@@ -962,7 +964,7 @@ local menu = {
                     SetCVar("floatingCombatTextCombatDamage", 0);
                 end
             end,
-            order = 3,
+            order = 4,
             width = "double",
         },
 
@@ -974,6 +976,16 @@ local menu = {
 			set = function(_, newValue) NameplateSCT.db.global.personal = newValue; end,
             order = 2,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
+        },
+
+        personalNameplateOnly = {
+            type = 'toggle',
+            name = "Personal SCT Only",
+            desc = "Don't display any numbers on enemies and only use the personal SCT.",
+			      get = function() return NameplateSCT.db.global.personalOnly; end,
+			      set = function(_, newValue) NameplateSCT.db.global.personalOnly = newValue; end,
+            order = 3,
+            disabled = function() return (not NameplateSCT.db.global.personal or not NameplateSCT.db.global.enabled); end;
         },
 
         animations = {
