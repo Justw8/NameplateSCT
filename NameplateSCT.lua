@@ -6,7 +6,7 @@ local LibEasing = LibStub("LibEasing-1.0");
 local SharedMedia = LibStub("LibSharedMedia-3.0");
 local MSQ = LibStub("Masque", true)
 
-NameplateSCT = AceAddon:NewAddon("NameplateSCT", "AceConsole-3.0", "AceEvent-3.0");
+local NameplateSCT = AceAddon:NewAddon("NameplateSCT", "AceConsole-3.0", "AceEvent-3.0");
 NameplateSCT.frame = CreateFrame("Frame", nil, UIParent);
 
 
@@ -632,17 +632,17 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellName, amount, school, critical;
+				local spellName, amount, school, critical, spellId;
 				if (string.find(clue, "SWING")) then
 					spellName, amount, _, _, _, _, _, critical = "melee", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
 					spellName, amount, _, school, _, _, _, critical = ...;
 				else
-					_, spellName, _, amount, _, school, _, _, _, critical = ...;
+					spellId, spellName, _, amount, _, school, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, spellName, amount, school, critical);
+				self:DamageEvent(destGUID, spellName, amount, school, critical, spellId);
 			elseif(string.find(clue, "_MISSED")) then
-				local spellName, missType;
+				local spellName, missType, spellId;
 
 				if (string.find(clue, "SWING")) then
 					if destGUID == playerGUID then
@@ -651,24 +651,24 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 					  missType = "melee";
 					end
 				else
-					_, spellName, _, missType = ...;
+					spellId, spellName, _, missType = ...;
 				end
-				self:MissEvent(destGUID, spellName, missType);
+				self:MissEvent(destGUID, spellName, missType, spellId);
 			end
 		end
 	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellName, amount, critical;
+				local spellName, amount, critical, spellId;
 				if (string.find(clue, "SWING")) then
 					spellName, amount, _, _, _, _, _, critical, _, _, _ = "pet", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
 					spellName, amount, _, _, _, _, _, critical= ...;
 				else
-					_, spellName, _, amount, _, _, _, _, _, critical = ...;
+					spellId, spellName, _, amount, _, _, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, spellName, amount, "pet", critical);
+				self:DamageEvent(destGUID, spellName, amount, "pet", critical, spellId);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
 				-- local spellName, spellSchool, missType, isOffHand, amountMissed;
 
@@ -704,7 +704,7 @@ end
 local numDamageEvents = 0;
 local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
-function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit)
+function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit, spellId)
     local text, animation, pow, size, alpha;
     local autoattack = spellName == "melee" or spellName == "pet";
 
@@ -818,10 +818,10 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit)
     if (size < 5) then
         size = 5;
     end
-    self:DisplayText(guid, text, size, animation, nil, pow, spellName);
+    self:DisplayText(guid, text, size, animation, spellId, pow, spellName);
 end
 
-function NameplateSCT:MissEvent(guid, spellName, missType)
+function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
     local text, animation, pow, size, alpha, color;
     local unit = guidToUnit[guid];
     local isTarget = unit and UnitIsUnit(unit, "target");
@@ -857,10 +857,10 @@ function NameplateSCT:MissEvent(guid, spellName, missType)
     text = MISS_EVENT_STRINGS[missType] or "Missed";
     text = "|Cff"..color..text.."|r";
 
-    self:DisplayText(guid, text, size, animation, nil, pow, spellName)
+    self:DisplayText(guid, text, size, animation, spellId, pow, spellName)
 end
 
-function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, spellName)
+function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spellName)
     local fontString;
     local icon;
     local unit = guidToUnit[guid];
@@ -887,7 +887,6 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
     if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
     fontString.startHeight = fontString:GetStringHeight();
     fontString.pow = pow;
-    fontString.frameLevel = frameLevel;
 
     if (fontString.startHeight <= 0) then
         fontString.startHeight = 5;
@@ -896,7 +895,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, frameLevel, pow, 
     fontString.unit = unit;
     fontString.guid = guid;
 
-		local texture = GetSpellTexture(spellName);
+		local texture = GetSpellTexture(spellId or spellName);
     if NameplateSCT.db.global.showIcon and texture then
       icon = fontString.icon;
       icon:Show();
