@@ -4,11 +4,11 @@
 local AceAddon = LibStub("AceAddon-3.0");
 local LibEasing = LibStub("LibEasing-1.0");
 local SharedMedia = LibStub("LibSharedMedia-3.0");
+local L = LibStub("AceLocale-3.0"):GetLocale("NameplateSCT")
 local MSQ = LibStub("Masque", true)
 
 local NameplateSCT = AceAddon:NewAddon("NameplateSCT", "AceConsole-3.0", "AceEvent-3.0");
 NameplateSCT.frame = CreateFrame("Frame", nil, UIParent);
-
 
 ------------
 -- LOCALS --
@@ -21,62 +21,62 @@ local unitToGuid = {};
 local guidToUnit = {};
 
 local function rgbToHex(r, g, b)
-    return string.format("%02x%02x%02x", math.floor(255 * r), math.floor(255 * g), math.floor(255 * b));
+  return string.format("%02x%02x%02x", math.floor(255 * r), math.floor(255 * g), math.floor(255 * b));
 end
 
 local function hexToRGB(hex)
-    return tonumber(hex:sub(1,2), 16)/255, tonumber(hex:sub(3,4), 16)/255, tonumber(hex:sub(5,6), 16)/255, 1;
+  return tonumber(hex:sub(1,2), 16)/255, tonumber(hex:sub(3,4), 16)/255, tonumber(hex:sub(5,6), 16)/255, 1;
 end
 
 local animationValues = {
-    -- ["shake"] = "Shake",
-    ["verticalUp"] = "Vertical Up",
-    ["verticalDown"] = "Vertical Down",
-    ["fountain"] = "Fountain",
-    ["rainfall"] = "Rainfall",
-    ["disabled"] = "Disabled",
+  -- ["shake"] = L["Shake"],
+  ["verticalUp"] = L["Vertical Up"],
+  ["verticalDown"] = L["Vertical Down"],
+  ["fountain"] = L["Fountain"],
+  ["rainfall"] = L["Rainfall"],
+  ["disabled"] = L["Disabled"]
 };
 
 local fontFlags = {
-    [""] = "None",
-    ["OUTLINE"] = "Outline",
-    ["THICKOUTLINE"] = "Thick Outline",
-    ["nil, MONOCHROME"] = "Monochrome",
-    ["OUTLINE , MONOCHROME"] = "Monochrome Outline",
-    ["THICKOUTLINE , MONOCHROME"] = "Monochrome Thick Outline",
+  [""] = L["None"],
+  ["OUTLINE"] = L["Outline"],
+  ["THICKOUTLINE"] = L["Thick Outline"],
+  ["nil, MONOCHROME"] = L["Monochrome"],
+  ["OUTLINE , MONOCHROME"] = L["Monochrome Outline"],
+  ["THICKOUTLINE , MONOCHROME"] = L["Monochrome Thick Outline"]
 };
 
 local stratas = {
-    ["BACKGROUND"] = "1. Background",
-    ["LOW"] = "2. Low",
-    ["MEDIUM"] = "3. Medium",
-    ["HIGH"] = "4. High",
-    ["DIALOG"] = "5. Dialog",
-    ["TOOLTIP"] = "6. Tooltip",
+  ["BACKGROUND"] = L["Background"],
+  ["LOW"] = L["Low"],
+  ["MEDIUM"] = L["Medium"],
+  ["HIGH"] = L["High"],
+  ["DIALOG"] = L["Dialog"],
+  ["TOOLTIP"] = L["Tooltip"]
 };
 
 local positionValues = {
-    ["TOP"] = "Top",
-    ["RIGHT"] = "Right",
-    ["BOTTOM"] = "Bottom",
-    ["LEFT"] = "Left",
-    ["TOPRIGHT"] = "Top Right",
-    ["TOPLEFT"] = "Top Left",
-    ["BOTTOMRIGHT"] = "Bottom Right",
-    ["BOTTOMLEFT"] = "Bottom Left",
-    ["CENTER"]  = "Center"
+  ["TOP"] = L["Top"],
+  ["RIGHT"] = L["Right"],
+  ["BOTTOM"] = L["Bottom"],
+  ["LEFT"] = L["Left"],
+  ["TOPRIGHT"] = L["Top Right"],
+  ["TOPLEFT"] = L["Top Left"],
+  ["BOTTOMRIGHT"] = L["Bottom Right"],
+  ["BOTTOMLEFT"] = L["Bottom Left"],
+  ["CENTER"]  = L["Center"]
 }
 
 local inversePositions = {
-    ["BOTTOM"] = "TOP",
-    ["LEFT"] = "RIGHT",
-    ["TOP"] = "BOTTOM",
-    ["RIGHT"] = "LEFT",
-    ["TOPLEFT"] = "BOTTOMRIGHT",
-    ["TOPRIGHT"] = "BOTTOMLEFT",
-    ["BOTTOMLEFT"] = "TOPRIGHT",
-    ["BOTTOMRIGHT"] = "TOPLEFT",
-    ["CENTER"]  = "CENTER"
+  ["BOTTOM"] = "TOP",
+  ["LEFT"] = "RIGHT",
+  ["TOP"] = "BOTTOM",
+  ["RIGHT"] = "LEFT",
+  ["TOPLEFT"] = "BOTTOMRIGHT",
+  ["TOPRIGHT"] = "BOTTOMLEFT",
+  ["BOTTOMLEFT"] = "TOPRIGHT",
+  ["BOTTOMRIGHT"] = "TOPLEFT",
+  ["CENTER"]  = "CENTER"
 }
 
 --------
@@ -194,53 +194,53 @@ local ANIMATION_RAINFALL_Y_START_MIN = 5
 local ANIMATION_RAINFALL_Y_START_MAX = 15;
 
 local DAMAGE_TYPE_COLORS = {
-    [SCHOOL_MASK_PHYSICAL] = "FFFF00",
-    [SCHOOL_MASK_HOLY] = "FFE680",
-    [SCHOOL_MASK_FIRE] = "FF8000",
-    [SCHOOL_MASK_NATURE] = "4DFF4D",
-    [SCHOOL_MASK_FROST] = "80FFFF",
-    [SCHOOL_MASK_SHADOW] = "8080FF",
-    [SCHOOL_MASK_ARCANE] = "FF80FF",
-	[SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW] = "A330C9", -- Chromatic
-	[SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW + SCHOOL_MASK_HOLY] = "A330C9", -- Magic
-	[SCHOOL_MASK_PHYSICAL + SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW + SCHOOL_MASK_HOLY] = "A330C9", -- Chaos
-	["melee"] = "FFFFFF",
-	["pet"] = "CC8400"
+  [SCHOOL_MASK_PHYSICAL] = "FFFF00",
+  [SCHOOL_MASK_HOLY] = "FFE680",
+  [SCHOOL_MASK_FIRE] = "FF8000",
+  [SCHOOL_MASK_NATURE] = "4DFF4D",
+  [SCHOOL_MASK_FROST] = "80FFFF",
+  [SCHOOL_MASK_SHADOW] = "8080FF",
+  [SCHOOL_MASK_ARCANE] = "FF80FF",
+  [SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW] = "A330C9", -- Chromatic
+  [SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW + SCHOOL_MASK_HOLY] = "A330C9", -- Magic
+  [SCHOOL_MASK_PHYSICAL + SCHOOL_MASK_FIRE + SCHOOL_MASK_FROST + SCHOOL_MASK_ARCANE + SCHOOL_MASK_NATURE + SCHOOL_MASK_SHADOW + SCHOOL_MASK_HOLY] = "A330C9", -- Chaos
+  ["melee"] = "FFFFFF",
+  ["pet"] = "CC8400"
 };
 
 local MISS_EVENT_STRINGS = {
-    ["ABSORB"] = "Absorbed",
-    ["BLOCK"] = "Blocked",
-    ["DEFLECT"] = "Deflected",
-    ["DODGE"] = "Dodged",
-    ["EVADE"] = "Evaded",
-    ["IMMUNE"] = "Immune",
-    ["MISS"] = "Missed",
-    ["PARRY"] = "Parried",
-    ["REFLECT"] = "Reflected",
-    ["RESIST"] = "Resisted",
+  ["ABSORB"] = L["Absorbed"],
+  ["BLOCK"] = L["Blocked"],
+  ["DEFLECT"] = L["Deflected"],
+  ["DODGE"] = L["Dodged"],
+  ["EVADE"] = L["Evaded"],
+  ["IMMUNE"] = L["Immune"],
+  ["MISS"] = L["Missed"],
+  ["PARRY"] = L["Parried"],
+  ["REFLECT"] = L["Reflected"],
+  ["RESIST"] = L["Resisted"],
 };
 
 local STRATAS = {
-    "BACKGROUND",
-    "LOW",
-    "MEDIUM",
-    "HIGH",
-    "DIALOG",
-    "TOOLTIP"
+  "BACKGROUND",
+  "LOW",
+  "MEDIUM",
+  "HIGH",
+  "DIALOG",
+  "TOOLTIP"
 };
 
 ----------------
 -- FONTSTRING --
 ----------------
 local function getFontPath(fontName)
-    local fontPath = SharedMedia:Fetch("font", fontName);
+  local fontPath = SharedMedia:Fetch("font", fontName);
 
-    if (fontPath == nil) then
-        fontPath = "Fonts\\FRIZQT__.TTF";
-    end
+  if (fontPath == nil) then
+    fontPath = "Fonts\\FRIZQT__.TTF";
+  end
 
-    return fontPath;
+  return fontPath;
 end
 
 local fontStringCache = {};
@@ -932,7 +932,6 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
     self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation);
 end
 
-
 -------------
 -- OPTIONS --
 -------------
@@ -944,8 +943,8 @@ local menu = {
     args = {
         enable = {
             type = 'toggle',
-            name = "Enable",
-            desc = "If the addon is enabled.",
+            name = L["Enable"],
+            desc = L["If the addon is enabled."],
             get = "IsEnabled",
             set = function(_, newValue) if (not newValue) then NameplateSCT:Disable(); else NameplateSCT:Enable(); end end,
             order = 1,
@@ -954,7 +953,7 @@ local menu = {
 
         disableBlizzardFCT = {
             type = 'toggle',
-            name = "BlizzardSCT",
+            name = L["BlizzardSCT"],
             get = function(_, newValue) return GetCVar("floatingCombatTextCombatDamage") == "1" end,
             set = function(_, newValue)
                 if (newValue) then
@@ -969,18 +968,18 @@ local menu = {
 
         personalNameplate = {
             type = 'toggle',
-            name = "Personal SCT",
-            desc = "Also show numbers when you take damage on your personal nameplate or center screen",
-			get = function() return NameplateSCT.db.global.personal; end,
-			set = function(_, newValue) NameplateSCT.db.global.personal = newValue; end,
+            name = L["Personal SCT"],
+            desc = L["Also show numbers when you take damage on your personal nameplate or center screen"],
+            get = function() return NameplateSCT.db.global.personal; end,
+            set = function(_, newValue) NameplateSCT.db.global.personal = newValue; end,
             order = 2,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
         },
 
         personalNameplateOnly = {
             type = 'toggle',
-            name = "Personal SCT Only",
-            desc = "Don't display any numbers on enemies and only use the personal SCT.",
+            name = L["Personal SCT Only"],
+            desc = L["Don't display any numbers on enemies and only use the personal SCT."],
 			      get = function() return NameplateSCT.db.global.personalOnly; end,
 			      set = function(_, newValue) NameplateSCT.db.global.personalOnly = newValue; end,
             order = 3,
@@ -989,15 +988,15 @@ local menu = {
 
         animations = {
             type = 'group',
-            name = "Animations",
+            name = L["Animations"],
             order = 30,
             inline = true,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
             args = {
 			    speed = {
                     type = 'range',
-                    name = "Animation Speed",
-                    desc = "Default speed: 1",
+                    name = L["Animation Speed"],
+                    desc = L["Default speed: 1"],
                     disabled = function() return not NameplateSCT.db.global.enabled; end,
                     min = 0.5,
                     max = 2,
@@ -1009,7 +1008,7 @@ local menu = {
                 },
                 ability = {
                     type = 'select',
-                    name = "Abilities",
+                    name = L["Abilities"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.animations.ability; end,
                     set = function(_, newValue) NameplateSCT.db.global.animations.ability = newValue; end,
@@ -1018,7 +1017,7 @@ local menu = {
                 },
                 crit = {
                     type = 'select',
-                    name = "Criticals",
+                    name = L["Criticals"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.animations.crit; end,
                     set = function(_, newValue) NameplateSCT.db.global.animations.crit = newValue; end,
@@ -1027,7 +1026,7 @@ local menu = {
                 },
                 miss = {
                     type = 'select',
-                    name = "Miss/Parry/Dodge/etc",
+                    name = L["Miss/Parry/Dodge/etc"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.animations.miss; end,
                     set = function(_, newValue) NameplateSCT.db.global.animations.miss = newValue; end,
@@ -1036,7 +1035,7 @@ local menu = {
                 },
                 autoattack = {
                     type = 'select',
-                    name = "Auto Attacks",
+                    name = L["Auto Attacks"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.animations.autoattack; end,
                     set = function(_, newValue) NameplateSCT.db.global.animations.autoattack = newValue; end,
@@ -1045,8 +1044,8 @@ local menu = {
                 },
                 autoattackcrit = {
                     type = 'select',
-                    name = "Critical",
-                    desc = "Auto attacks that are critical hits",
+                    name = L["Critical"],
+                    desc = L["Auto attacks that are critical hits"],
                     get = function() return NameplateSCT.db.global.animations.autoattackcrit; end,
                     set = function(_, newValue) NameplateSCT.db.global.animations.autoattackcrit = newValue; end,
                     values = animationValues,
@@ -1054,8 +1053,8 @@ local menu = {
                 },
                 autoattackcritsizing = {
                     type = 'toggle',
-                    name = "Embiggen Crits",
-                    desc = "Embiggen critical auto attacks",
+                    name = L["Embiggen Crits"],
+                    desc = L["Embiggen critical auto attacks"],
                     get = function() return NameplateSCT.db.global.sizing.autoattackcritsizing; end,
                     set = function(_, newValue) NameplateSCT.db.global.sizing.autoattackcritsizing = newValue; end,
                     order = 7,
@@ -1065,7 +1064,7 @@ local menu = {
 
         appearance = {
             type = 'group',
-            name = "Appearance/Offsets",
+            name = L["Appearance/Offsets"],
             order = 50,
             inline = true,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
@@ -1073,7 +1072,7 @@ local menu = {
                 font = {
                     type = "select",
                     dialogControl = "LSM30_Font",
-                    name = "Font",
+                    name = L["Font"],
                     order = 1,
                     values = AceGUIWidgetLSMlists.font,
                     get = function() return NameplateSCT.db.global.font; end,
@@ -1081,7 +1080,7 @@ local menu = {
                 },
                 fontFlag = {
                     type = 'select',
-                    name = "Font Flags",
+                    name = L["Font Flags"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.fontFlag; end,
                     set = function(_, newValue) NameplateSCT.db.global.fontFlag = newValue; end,
@@ -1090,7 +1089,7 @@ local menu = {
                 },
                 fontShadow = {
                     type = 'toggle',
-                    name = "Text Shadow",
+                    name = L["Text Shadow"],
                     get = function() return NameplateSCT.db.global.textShadow; end,
                     set = function(_, newValue) NameplateSCT.db.global.textShadow = newValue end,
                     order = 3,
@@ -1098,7 +1097,7 @@ local menu = {
 
                 damageColor = {
                     type = 'toggle',
-                    name = "Use Damage Type Color",
+                    name = L["Use Damage Type Color"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.damageColor; end,
                     set = function(_, newValue) NameplateSCT.db.global.damageColor = newValue; end,
@@ -1107,7 +1106,7 @@ local menu = {
 
                 defaultColor = {
                     type = 'color',
-                    name = "Default Color",
+                    name = L["Default Color"],
                     desc = "",
                     disabled = function() return NameplateSCT.db.global.damageColor; end,
                     hasAlpha = false,
@@ -1118,8 +1117,8 @@ local menu = {
 
                 xOffset = {
                     type = 'range',
-                    name = "X Offset",
-                    desc = "Has soft max/min, you can type whatever you'd like into the editbox",
+                    name = L["X Offset"],
+                    desc = L["Has soft max/min, you can type whatever you'd like into the editbox"],
                     softMin = -75,
                     softMax = 75,
                     step = 1,
@@ -1131,8 +1130,8 @@ local menu = {
 
                 yOffset = {
                     type = 'range',
-                    name = "Y Offset",
-                    desc = "Has soft max/min, you can type whatever you'd like into the editbox",
+                    name = L["Y Offset"],
+                    desc = L["Has soft max/min, you can type whatever you'd like into the editbox"],
                     softMin = -75,
                     softMax = 75,
                     step = 1,
@@ -1144,7 +1143,7 @@ local menu = {
 
                 modOffTargetStrata = {
                     type = 'toggle',
-                    name = "Use Separate Off-Target Strata",
+                    name = L["Use Separate Off-Target Strata"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
                     set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
@@ -1153,7 +1152,7 @@ local menu = {
 
                 targetStrata = {
                     type = 'select',
-                    name = "Target Strata",
+                    name = L["Target Strata"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.strata.target; end,
                     set = function(_, newValue) NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
@@ -1163,7 +1162,7 @@ local menu = {
 
                 offTargetStrata = {
                     type = 'select',
-                    name = "Off-Target Strata",
+                    name = L["Off-Target Strata"],
                     desc = "",
                     disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
                     get = function() return NameplateSCT.db.global.strata.offTarget; end,
@@ -1173,14 +1172,14 @@ local menu = {
                 },
                 iconAppearance = {
                   type = 'group',
-                  name = "Icons",
+                  name = L["Icons"],
                   order = 60,
                   inline = true,
                   disabled = function() return not NameplateSCT.db.global.enabled; end;
                   args = {
                     showIcon = {
                       type = 'toggle',
-                      name = "Display Icon",
+                      name = L["Display Icon"],
                       desc = "",
                       get = function() return NameplateSCT.db.global.showIcon; end,
                       set = function(_, newValue) NameplateSCT.db.global.showIcon = newValue; end,
@@ -1189,8 +1188,8 @@ local menu = {
                     },
                     enableMSQ = {
                       type = 'toggle',
-                      name = "Enable Masque",
-                      desc = "Let Masuqe skin the icons",
+                      name = L["Enable Masque"],
+                      desc = L["Let Masuqe skin the icons"],
                       hidden = function() return not NameplateSCT.db.global.showIcon; end,
                       get = function() return NameplateSCT.db.global.enableMSQ; end,
                       set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue; end,
@@ -1199,8 +1198,8 @@ local menu = {
                     },
                     iconScale = {
                       type = 'range',
-                      name = "Icon Scale",
-                      desc = "Scale of the spell icon",
+                      name = L["Icon Scale"],
+                      desc = L["Scale of the spell icon"],
                       softMin = 0.5,
                       softMax = 2,
                       isPercent = true,
@@ -1213,7 +1212,7 @@ local menu = {
                     },
                     iconPosition = {
                       type = 'select',
-                      name = "Position",
+                      name = L["Position"],
                       desc = "",
                       hidden = function() return not NameplateSCT.db.global.showIcon; end,
                       get = function() return NameplateSCT.db.global.iconPosition or "Right"; end,
@@ -1223,7 +1222,7 @@ local menu = {
                     },
                     xOffsetIcon = {
                       type = 'range',
-                      name = "Icon X Offset",
+                      name = L["Icon X Offset"],
                       hidden = function() return not NameplateSCT.db.global.showIcon; end,
                       softMin = -30,
                       softMax = 30,
@@ -1235,7 +1234,7 @@ local menu = {
                     },
                     yOffsetIcon = {
                       type = 'range',
-                      name = "Icon Y Offset",
+                      name = L["Icon Y Offset"],
                       hidden = function() return not NameplateSCT.db.global.showIcon; end,
                       softMin = -30,
                       softMax = 30,
@@ -1252,7 +1251,7 @@ local menu = {
 
         animationsPersonal = {
             type = 'group',
-            name = "Personal SCT Animations",
+            name = L["Personal SCT Animations"],
             order = 60,
             inline = true,
             hidden = function() return not NameplateSCT.db.global.personal; end,
@@ -1260,7 +1259,7 @@ local menu = {
             args = {
                 normalPersonal = {
                     type = 'select',
-                    name = "Default",
+                    name = L["Default"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.animationsPersonal.normal; end,
                     set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.normal = newValue; end,
@@ -1269,7 +1268,7 @@ local menu = {
                 },
                 critPersonal = {
                     type = 'select',
-                    name = "Criticals",
+                    name = L["Criticals"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.animationsPersonal.crit; end,
                     set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.crit = newValue; end,
@@ -1278,7 +1277,7 @@ local menu = {
                 },
                 missPersonal = {
                     type = 'select',
-                    name = "Miss/Parry/Dodge/etc",
+                    name = L["Miss/Parry/Dodge/etc"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.animationsPersonal.miss; end,
                     set = function(_, newValue) NameplateSCT.db.global.animationsPersonal.miss = newValue; end,
@@ -1288,7 +1287,7 @@ local menu = {
 
                 damageColorPersonal = {
                     type = 'toggle',
-                    name = "Use Damage Type Color",
+                    name = L["Use Damage Type Color"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.damageColorPersonal; end,
                     set = function(_, newValue) NameplateSCT.db.global.damageColorPersonal = newValue; end,
@@ -1297,7 +1296,7 @@ local menu = {
 
                 defaultColorPersonal = {
                     type = 'color',
-                    name = "Default Color",
+                    name = L["Default Color"],
                     desc = "",
                     disabled = function() return NameplateSCT.db.global.damageColorPersonal; end,
                     hasAlpha = false,
@@ -1308,9 +1307,9 @@ local menu = {
 
                 xOffsetPersonal = {
                     type = 'range',
-                    name = "X Offset Personal SCT",
+                    name = L["X Offset Personal SCT"],
+                    desc = L["Only used if Personal Nameplate is Disabled"],
                     hidden = function() return not NameplateSCT.db.global.personal; end,
-                    desc = "Only used if Personal Nameplate is Disabled",
                     softMin = -400,
                     softMax = 400,
                     step = 1,
@@ -1322,9 +1321,9 @@ local menu = {
 
                 yOffsetPersonal = {
                     type = 'range',
-                    name = "Y Offset Personal SCT",
+                    name = L["Y Offset Personal SCT"],
+                    desc = L["Only used if Personal Nameplate is Disabled"],
                     hidden = function() return not NameplateSCT.db.global.personal; end,
-                    desc = "Only used if Personal Nameplate is Disabled",
                     softMin = -400,
                     softMax = 400,
                     step = 1,
@@ -1338,14 +1337,14 @@ local menu = {
 
         formatting = {
             type = 'group',
-            name = "Text Formatting",
+            name = L["Text Formatting"],
             order = 90,
             inline = true,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
             args = {
                 truncate = {
                     type = 'toggle',
-                    name = "Truncate Number",
+                    name = L["Truncate Number"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.truncate; end,
                     set = function(_, newValue) NameplateSCT.db.global.truncate = newValue; end,
@@ -1353,7 +1352,7 @@ local menu = {
                 },
                 truncateLetter = {
                     type = 'toggle',
-                    name = "Show Truncated Letter",
+                    name = L["Show Truncated Letter"],
                     desc = "",
                     disabled = function() return not NameplateSCT.db.global.enabled or not NameplateSCT.db.global.truncate; end,
                     get = function() return NameplateSCT.db.global.truncateLetter; end,
@@ -1362,7 +1361,7 @@ local menu = {
                 },
                 commaSeperate = {
                     type = 'toggle',
-                    name = "Comma Seperate",
+                    name = L["Comma Seperate"],
                     desc = "100000 -> 100,000",
                     disabled = function() return not NameplateSCT.db.global.enabled or NameplateSCT.db.global.truncate; end,
                     get = function() return NameplateSCT.db.global.commaSeperate; end,
@@ -1371,7 +1370,7 @@ local menu = {
                 },
                 size = {
                     type = 'range',
-                    name = "Size",
+                    name = L["Size"],
                     desc = "",
                     min = 5,
                     max = 72,
@@ -1382,7 +1381,7 @@ local menu = {
                 },
                 alpha = {
                     type = 'range',
-                    name = "Alpha",
+                    name = L["Alpha"],
                     desc = "",
                     min = 0.1,
                     max = 1,
@@ -1394,7 +1393,7 @@ local menu = {
 
                 useOffTarget = {
                     type = 'toggle',
-                    name = "Use Seperate Off-Target Text Appearance",
+                    name = L["Use Seperate Off-Target Text Appearance"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.useOffTarget; end,
                     set = function(_, newValue) NameplateSCT.db.global.useOffTarget = newValue; end,
@@ -1403,14 +1402,14 @@ local menu = {
                 },
                 offTarget = {
                     type = 'group',
-                    name = "Off-Target Text Appearance",
+                    name = L["Off-Target Text Appearance"],
                     hidden = function() return not NameplateSCT.db.global.useOffTarget; end,
                     order = 101,
                     inline = true,
                     args = {
                         size = {
                             type = 'range',
-                            name = "Size",
+                            name = L["Size"],
                             desc = "",
                             min = 5,
                             max = 72,
@@ -1421,7 +1420,7 @@ local menu = {
                         },
                         alpha = {
                             type = 'range',
-                            name = "Alpha",
+                            name = L["Alpha"],
                             desc = "",
                             min = 0.1,
                             max = 1,
@@ -1437,14 +1436,14 @@ local menu = {
 
         sizing = {
             type = 'group',
-            name = "Sizing Modifiers",
+            name = L["Sizing Modifiers"],
             order = 100,
             inline = true,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
             args = {
                 crits = {
                     type = 'toggle',
-                    name = "Embiggen Crits",
+                    name = L["Embiggen Crits"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.sizing.crits; end,
                     set = function(_, newValue) NameplateSCT.db.global.sizing.crits = newValue; end,
@@ -1452,7 +1451,7 @@ local menu = {
                 },
                 critsScale = {
                     type = 'range',
-                    name = "Embiggen Crits Scale",
+                    name = L["Embiggen Crits Scale"],
                     desc = "",
                     disabled = function() return not NameplateSCT.db.global.enabled or not NameplateSCT.db.global.sizing.crits; end,
                     min = 1,
@@ -1466,7 +1465,7 @@ local menu = {
 
                 miss = {
                     type = 'toggle',
-                    name = "Embiggen Miss/Parry/Dodge/etc",
+                    name = L["Embiggen Miss/Parry/Dodge/etc"],
                     desc = "",
                     get = function() return NameplateSCT.db.global.sizing.miss; end,
                     set = function(_, newValue) NameplateSCT.db.global.sizing.miss = newValue; end,
@@ -1474,7 +1473,7 @@ local menu = {
                 },
                 missScale = {
                     type = 'range',
-                    name = "Embiggen Miss/Parry/Dodge/etc Scale",
+                    name = L["Embiggen Miss/Parry/Dodge/etc Scale"],
                     desc = "",
                     disabled = function() return not NameplateSCT.db.global.enabled or not NameplateSCT.db.global.sizing.miss; end,
                     min = 1,
@@ -1488,8 +1487,8 @@ local menu = {
 
                 smallHits = {
                     type = 'toggle',
-                    name = "Scale Down Small Hits",
-                    desc = "Scale down hits that are below a running average of your recent damage output",
+                    name = L["Scale Down Small Hits"],
+                    desc = L["Scale down hits that are below a running average of your recent damage output"],
                     disabled = function() return not NameplateSCT.db.global.enabled or NameplateSCT.db.global.sizing.smallHitsHide; end,
                     get = function() return NameplateSCT.db.global.sizing.smallHits; end,
                     set = function(_, newValue) NameplateSCT.db.global.sizing.smallHits = newValue; end,
@@ -1497,7 +1496,7 @@ local menu = {
                 },
                 smallHitsScale = {
                     type = 'range',
-                    name = "Small Hits Scale",
+                    name = L["Small Hits Scale"],
                     desc = "",
                     disabled = function() return not NameplateSCT.db.global.enabled or not NameplateSCT.db.global.sizing.smallHits or NameplateSCT.db.global.sizing.smallHitsHide; end,
                     min = 0.33,
@@ -1510,8 +1509,8 @@ local menu = {
                 },
                 smallHitsHide = {
                     type = 'toggle',
-                    name = "Hide Small Hits",
-                    desc = "Hide hits that are below a running average of your recent damage output",
+                    name = L["Hide Small Hits"],
+                    desc = L["Hide hits that are below a running average of your recent damage output"],
                     get = function() return NameplateSCT.db.global.sizing.smallHitsHide; end,
                     set = function(_, newValue) NameplateSCT.db.global.sizing.smallHitsHide = newValue; end,
                     order = 22,

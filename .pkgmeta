@@ -16,8 +16,8 @@ externals:
     Libs/AceGUI-3.0:
         url: https://repos.wowace.com/wow/ace3/trunk/AceGUI-3.0
         tag: latest
-    Libs/CallbackHandler-1.0:
-        url: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+    Libs/AceLocale-3.0:
+        url: https://repos.wowace.com/wow/ace3/trunk/AceGUI-3.0
         tag: latest
     Libs/AceEvent-3.0:
         url: https://repos.wowace.com/wow/ace3/trunk/AceEvent-3.0
@@ -27,6 +27,9 @@ externals:
         tag: latest
     Libs/AceGUI-3.0-SharedMediaWidgets:
         url: https://repos.wowace.com/wow/ace-gui-3-0-shared-media-widgets/trunk/AceGUI-3.0-SharedMediaWidgets
+        tag: latest
+    Libs/CallbackHandler-1.0:
+        url: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
         tag: latest
     Libs/LibEasing:
         url: https://github.com/Mpstark/LibEasing.git
