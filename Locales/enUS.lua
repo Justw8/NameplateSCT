@@ -48,6 +48,7 @@ L["Reflected"] = true
 L["Resisted"] = true
 
 -- Options
+L["YOUR ENEMY NAMEPLATES ARE DISABLED, NAMEPLATESCT WILL NOT WORK!!"] = true
 L["Enable"] = true
 L["If the addon is enabled."] = true
 L["BlizzardSCT"] = true

@@ -941,14 +941,41 @@ local menu = {
     handler = NameplateSCT,
     type = 'group',
     args = {
+        nameplatesEnabled = {
+            type = 'description',
+            name = "|cFFFF0000"..L["YOUR ENEMY NAMEPLATES ARE DISABLED, NAMEPLATESCT WILL NOT WORK!!"].."|r",
+            hidden = function() return GetCVar("nameplateShowEnemies") == "1" end,
+            order = 1,
+            width = "full",
+        },
+        -- enemyNameplatesEnabler = {
+        --     type = 'toggle',
+        --     name = "Enemy Nameplates - Enabling Required",
+        --     get = function(_, newValue) return GetCVar("nameplateShowEnemies") == "1" end,
+        --     set = function(_, newValue)
+        --         if (newValue) then
+        --             SetCVar("nameplateShowEnemies", 1);
+        --         end
+        --     end,
+        --     hidden = function() return GetCVar("nameplateShowEnemies") == "1" end,
+        --     order = 2,
+        --     width = "full",
+        -- },
+        nameplatesEnabled2 = {
+            type = 'description',
+            name = "|cFFFF0000"..L["YOUR ENEMY NAMEPLATES ARE DISABLED, NAMEPLATESCT WILL NOT WORK!!"].."|r",
+            hidden = function() return GetCVar("nameplateShowEnemies") == "1" end,
+            order = 3,
+            width = "full",
+        },
         enable = {
             type = 'toggle',
             name = L["Enable"],
             desc = L["If the addon is enabled."],
             get = "IsEnabled",
             set = function(_, newValue) if (not newValue) then NameplateSCT:Disable(); else NameplateSCT:Enable(); end end,
-            order = 1,
-            width = "half",
+            order = 4,
+            width = "full",
         },
 
         disableBlizzardFCT = {
@@ -962,8 +989,8 @@ local menu = {
                     SetCVar("floatingCombatTextCombatDamage", 0);
                 end
             end,
-            order = 4,
-            width = "double",
+            order = 5,
+            width = "full",
         },
 
         personalNameplate = {
@@ -972,7 +999,7 @@ local menu = {
             desc = L["Also show numbers when you take damage on your personal nameplate or center screen"],
             get = function() return NameplateSCT.db.global.personal; end,
             set = function(_, newValue) NameplateSCT.db.global.personal = newValue; end,
-            order = 2,
+            order = 6,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
         },
 
@@ -982,10 +1009,9 @@ local menu = {
             desc = L["Don't display any numbers on enemies and only use the personal SCT."],
 			      get = function() return NameplateSCT.db.global.personalOnly; end,
 			      set = function(_, newValue) NameplateSCT.db.global.personalOnly = newValue; end,
-            order = 3,
+            order = 7,
             disabled = function() return (not NameplateSCT.db.global.personal or not NameplateSCT.db.global.enabled); end;
         },
-
         animations = {
             type = 'group',
             name = L["Animations"],
@@ -1044,7 +1070,7 @@ local menu = {
                 },
                 autoattackcrit = {
                     type = 'select',
-                    name = L["Critical"],
+                    name = L["Criticals"],
                     desc = L["Auto attacks that are critical hits"],
                     get = function() return NameplateSCT.db.global.animations.autoattackcrit; end,
                     set = function(_, newValue) NameplateSCT.db.global.animations.autoattackcrit = newValue; end,
