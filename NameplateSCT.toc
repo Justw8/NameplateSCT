@@ -6,6 +6,8 @@
 ## Notes: Nameplate-based scrolling combat text.
 ## OptionalDeps: Ace3, LibEasing
 
+## X-Curse-Project-ID: 269544
+
 embeds.xml
 Locales\locale.xml
 NameplateSCT.lua
