@@ -895,7 +895,11 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
     fontString.unit = unit;
     fontString.guid = guid;
 
-		local texture = GetSpellTexture(spellId or spellName);
+
+	local texture = GetSpellTexture(spellId or spellName);
+	if not texture then -- try againwith only the spellname incase we get a faulty spellId (classic: always 0)
+		texture = GetSpellTexture(spellName);
+	end
     if NameplateSCT.db.global.showIcon and texture then
       icon = fontString.icon;
       icon:Show();
