@@ -632,15 +632,15 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellName, amount, school, critical, spellId;
+				local spellName, amount, overkill, school, critical, spellId;
 				if (string.find(clue, "SWING")) then
-					spellName, amount, _, _, _, _, _, critical = "melee", ...;
+					spellName, amount, overkill, _, _, _, _, critical = "melee", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, _, school, _, _, _, critical = ...;
+					spellName, amount, overkill, school, _, _, _, critical = ...;
 				else
-					spellId, spellName, _, amount, _, school, _, _, _, critical = ...;
+					spellId, spellName, _, amount, overkill, school, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, spellName, amount, school, critical, spellId);
+				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId);
 			elseif(string.find(clue, "_MISSED")) then
 				local spellName, missType, spellId;
 
@@ -660,15 +660,15 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
-				local spellName, amount, critical, spellId;
+				local spellName, amount, overkill, critical, spellId;
 				if (string.find(clue, "SWING")) then
-					spellName, amount, _, _, _, _, _, critical, _, _, _ = "pet", ...;
+					spellName, amount, overkill, _, _, _, _, critical, _, _, _ = "pet", ...;
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, _, _, _, _, _, critical= ...;
+					spellName, amount, overkill, _, _, _, _, critical= ...;
 				else
-					spellId, spellName, _, amount, _, _, _, _, _, critical = ...;
+					spellId, spellName, _, amount, overkill, _, _, _, _, critical = ...;
 				end
-				self:DamageEvent(destGUID, spellName, amount, "pet", critical, spellId);
+				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
 				-- local spellName, spellSchool, missType, isOffHand, amountMissed;
 
@@ -704,7 +704,7 @@ end
 local numDamageEvents = 0;
 local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
-function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit, spellId)
+function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, crit, spellId)
     local text, animation, pow, size, alpha;
     local autoattack = spellName == "melee" or spellName == "pet";
 
@@ -818,7 +818,14 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, school, crit, spellId
     if (size < 5) then
         size = 5;
     end
-    self:DisplayText(guid, text, size, animation, spellId, pow, spellName);
+	
+	if (overkill > 0) then
+	    text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.." Overkill("..overkill..")";
+		
+		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName);
+	else
+		self:DisplayText(guid, text, size, animation, spellId, pow, spellName);
+	end
 end
 
 function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
@@ -893,6 +900,69 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
     end
 
     fontString.unit = unit;
+    fontString.guid = guid;
+
+		local texture = GetSpellTexture(spellId or spellName);
+    if NameplateSCT.db.global.showIcon and texture then
+      icon = fontString.icon;
+      icon:Show();
+      icon:SetTexture(texture);
+      if MSQ and NameplateSCT.db.global.enableMSQ then
+        icon.button:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
+        icon.button:SetPoint(
+        inversePositions[NameplateSCT.db.global.iconPosition],
+        fontString,
+        NameplateSCT.db.global.iconPosition,
+        NameplateSCT.db.global.xOffsetIcon,
+        NameplateSCT.db.global.yOffsetIcon
+        )
+        icon.button:Show()
+      else
+        icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
+        icon:SetPoint(
+        inversePositions[NameplateSCT.db.global.iconPosition],
+        fontString,
+        NameplateSCT.db.global.iconPosition,
+        NameplateSCT.db.global.xOffsetIcon,
+        NameplateSCT.db.global.yOffsetIcon
+        )
+      end
+      fontString.icon = icon
+    else
+      if fontString.icon then
+        fontString.icon:Hide();
+        if MSQ and NameplateSCT.db.global.enableMSQ then
+          fontString.icon.button:Hide()
+        end
+      end
+    end
+    self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation);
+end
+
+function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
+    local fontString;
+    local icon;
+    local unit = guidToUnit[guid];
+    local nameplate;
+
+    nameplate = "player"
+
+    fontString = getFontString();
+
+    fontString.NSCTText = text;
+    fontString:SetText(fontString.NSCTText);
+
+    fontString.NSCTFontSize = size;
+    fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
+    if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
+    fontString.startHeight = fontString:GetStringHeight();
+    fontString.pow = pow;
+
+    if (fontString.startHeight <= 0) then
+        fontString.startHeight = 5;
+    end
+
+    fontString.unit = "player";
     fontString.guid = guid;
 
 		local texture = GetSpellTexture(spellId or spellName);
