@@ -1,5 +1,5 @@
-## Interface: 90001
-## Version: 1.21
+## Interface: 90002
+## Version: 1.22
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
