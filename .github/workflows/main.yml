@@ -1,0 +1,24 @@
+name: Package and release
+
+on:
+  push:
+    branches:
+      - master
+
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v1
+
+
+      - name: Package and release
+        uses: Justw8/packager@master
