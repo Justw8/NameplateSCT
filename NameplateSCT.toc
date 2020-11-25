@@ -1,11 +1,13 @@
-## Interface: 11302
-## Version: 1.5
+## Interface: 90002
+## Version: 1.22
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
 ## Notes: Nameplate-based scrolling combat text.
 ## OptionalDeps: Ace3, LibEasing
 
-embeds.xml
+## X-Curse-Project-ID: 269544
 
+embeds.xml
+Locales\locale.xml
 NameplateSCT.lua
