@@ -94,6 +94,7 @@ end
 local defaults = {
     global = {
         enabled = true,
+        shouldDisplayOverkill = false,
         xOffset = 0,
         yOffset = 0,
         personalOnly = false,
@@ -819,7 +820,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
         size = 5;
     end
 	
-	if (overkill > 0) then
+	if (overkill > 0 and self.db.global.shouldDisplayOverkill) then
 	    text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.." Overkill("..overkill..")";
 		
 		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName);
@@ -1063,13 +1064,23 @@ local menu = {
             width = "full",
         },
 
+        displayOverkill = {
+            type = 'toggle',
+            name = L["Display Overkill"],
+            desc = L["Display your overkill for a target over your own nameplate"],
+            get = function() return NameplateSCT.db.global.shouldDisplayOverkill; end,
+            set = function(_, newValue) NameplateSCT.db.global.shouldDisplayOverkill = newValue; end,
+            order = 6,
+            width = "full",
+        },
+
         personalNameplate = {
             type = 'toggle',
             name = L["Personal SCT"],
             desc = L["Also show numbers when you take damage on your personal nameplate or center screen"],
             get = function() return NameplateSCT.db.global.personal; end,
             set = function(_, newValue) NameplateSCT.db.global.personal = newValue; end,
-            order = 6,
+            order = 7,
             disabled = function() return not NameplateSCT.db.global.enabled; end;
         },
 
@@ -1079,7 +1090,7 @@ local menu = {
             desc = L["Don't display any numbers on enemies and only use the personal SCT."],
 			      get = function() return NameplateSCT.db.global.personalOnly; end,
 			      set = function(_, newValue) NameplateSCT.db.global.personalOnly = newValue; end,
-            order = 7,
+            order = 8,
             disabled = function() return (not NameplateSCT.db.global.personal or not NameplateSCT.db.global.enabled); end;
         },
         animations = {
