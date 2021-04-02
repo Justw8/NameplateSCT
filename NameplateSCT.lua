@@ -764,24 +764,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
     end
 
     -- color text
-		if guid ~= playerGUID then
-			if self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school] then
-				text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.."|r";
-			elseif self.db.global.damageColor and spellName == "melee" and DAMAGE_TYPE_COLORS[spellName] then
-				text = "|Cff"..DAMAGE_TYPE_COLORS[spellName]..text.."|r";
-			else
-				text = "|Cff"..self.db.global.defaultColor..text.."|r";
-			end
-		else
-			if self.db.global.damageColorPersonal and school and DAMAGE_TYPE_COLORS[school] then
-				text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.."|r";
-			elseif self.db.global.damageColorPersonal and spellName == "melee" and DAMAGE_TYPE_COLORS[spellName] then
-				text = "|Cff"..DAMAGE_TYPE_COLORS[spellName]..text.."|r";
-			else
-				text = "|Cff"..self.db.global.defaultColorPersonal..text.."|r";
-			end
-		end
-
+    text = self:ColorText(text, guid, playerGUID, school, spellName);
 
     -- shrink small hits
     if (self.db.global.sizing.smallHits or self.db.global.sizing.smallHitsHide) and playerGUID ~= guid then
@@ -821,8 +804,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
     end
 	
 	if (overkill > 0 and self.db.global.shouldDisplayOverkill) then
-	    text = "|Cff"..DAMAGE_TYPE_COLORS[school]..text.." Overkill("..overkill..")";
-		
+        text = self:ColorText(text.." Overkill("..overkill..")", guid, playerGUID, school, spellName);
 		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName);
 	else
 		self:DisplayText(guid, text, size, animation, spellId, pow, spellName);
@@ -1001,6 +983,29 @@ function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, 
       end
     end
     self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation);
+end
+
+function NameplateSCT:ColorText(startingText, guid, playerGUID, school, spellName)
+    local finalText;
+    if guid ~= playerGUID then
+        if self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school] then
+            finalText = "|Cff"..DAMAGE_TYPE_COLORS[school]..startingText.."|r";
+        elseif self.db.global.damageColor and spellName == "melee" and DAMAGE_TYPE_COLORS[spellName] then
+            finalText = "|Cff"..DAMAGE_TYPE_COLORS[spellName]..startingText.."|r";
+        else
+            finalText = "|Cff"..self.db.global.defaultColor..startingText.."|r";
+        end
+    else
+        if self.db.global.damageColorPersonal and school and DAMAGE_TYPE_COLORS[school] then
+            finalText = "|Cff"..DAMAGE_TYPE_COLORS[school]..startingText.."|r";
+        elseif self.db.global.damageColorPersonal and spellName == "melee" and DAMAGE_TYPE_COLORS[spellName] then
+            finalText = "|Cff"..DAMAGE_TYPE_COLORS[spellName]..startingText.."|r";
+        else
+            finalText = "|Cff"..self.db.global.defaultColorPersonal..startingText.."|r";
+        end
+    end
+
+    return finalText;
 end
 
 -------------
