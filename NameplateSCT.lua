@@ -193,6 +193,16 @@ local ANIMATION_RAINFALL_Y_MAX = 100;
 local ANIMATION_RAINFALL_Y_START_MIN = 5
 local ANIMATION_RAINFALL_Y_START_MAX = 15;
 
+if not SCHOOL_MASK_PHYSICAL then -- XXX 9.1 PTR Support
+    SCHOOL_MASK_PHYSICAL = Enum.Damageclass.MaskPhysical
+    SCHOOL_MASK_HOLY = Enum.Damageclass.MaskHoly
+    SCHOOL_MASK_FIRE = Enum.Damageclass.MaskFire
+    SCHOOL_MASK_NATURE = Enum.Damageclass.MaskNature
+    SCHOOL_MASK_FROST = Enum.Damageclass.MaskFrost
+    SCHOOL_MASK_SHADOW = Enum.Damageclass.MaskShadow
+    SCHOOL_MASK_ARCANE = Enum.Damageclass.MaskArcane
+end
+
 local DAMAGE_TYPE_COLORS = {
   [SCHOOL_MASK_PHYSICAL] = "FFFF00",
   [SCHOOL_MASK_HOLY] = "FFE680",
