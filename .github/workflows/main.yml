@@ -22,3 +22,8 @@ jobs:
 
       - name: Package and release
         uses: Justw8/packager@master
+
+      - name: BC Package and release
+        uses: Justw8/packager@master
+        with:
+          args: -g bcc

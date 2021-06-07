@@ -1,4 +1,5 @@
-## Interface: 11305
+## Interface: 11307
+## Interface-BCC: 20501
 ## Version: 1.8
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
