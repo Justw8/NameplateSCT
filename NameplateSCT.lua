@@ -654,18 +654,19 @@ local MISS_EVENT_STRINGS = {
                   end
                   self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId);
               elseif(string.find(clue, "_MISSED")) then
-                  local spellName, missType, spellId;
+                  local spellName, missType, spellId, meleeMiss;
 
                   if (string.find(clue, "SWING")) then
+                    meleeMiss = true
                       if destGUID == playerGUID then
                         missType = ...;
                       else
-                        missType = "melee";
+                        missType = ...;
                       end
                   else
                       spellId, spellName, _, missType = ...;
                   end
-                  self:MissEvent(destGUID, spellName, missType, spellId);
+                  self:MissEvent(destGUID, spellName, missType, spellId, meleeMiss);
               end
           end
       elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
@@ -822,19 +823,18 @@ local MISS_EVENT_STRINGS = {
       end
   end
 
-  function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
+  function NameplateSCT:MissEvent(guid, spellName, missType, spellId, meleeMiss)
       local text, animation, pow, size, alpha, color;
       local unit = guidToUnit[guid];
       local isTarget = unit and UnitIsUnit(unit, "target");
 
       if playerGUID ~= guid then
         animation = self.db.global.animations.miss
-        color = self.db.global.defaultColor
+        color = meleeMiss and "FFFFFF" or self.db.global.defaultColor
       else
         animation = self.db.global.animationsPersonal.miss
         color = self.db.global.defaultColorPersonal
       end
-
       -- No animation set, cancel out
       if (animation == "disabled") then
         return;
