@@ -282,6 +282,7 @@ local MISS_EVENT_STRINGS = {
       if NameplateSCT.db.global.showIcon then
         if not fontString.icon then
           fontString.icon = NameplateSCT.frame:CreateTexture(nil, "BACKGROUND");
+          fontString.icon:SetParent(fontStringFrame);
         end
         fontString.icon:SetAlpha(1);
         fontString.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
