@@ -48,6 +48,8 @@ L["Reflected"] = true
 L["Resisted"] = true
 
 -- Options
+L["Spells"] = true
+L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"] = true
 L["YOUR ENEMY NAMEPLATES ARE DISABLED, NAMEPLATESCT WILL NOT WORK!!"] = true
 L["Enable"] = true
 L["If the addon is enabled."] = true

@@ -291,7 +291,6 @@ local function getFontString()
 	if NameplateSCT.db.global.showIcon then
 	if not fontString.icon then
 		fontString.icon = NameplateSCT.frame:CreateTexture(nil, "BACKGROUND");
-		fontString.icon:SetParent(fontStringFrame);
 	end
 	fontString.icon:SetAlpha(1);
 	fontString.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
@@ -1672,7 +1671,7 @@ local filters = {
 	args = {
 		enable = {
 			type = "toggle",
-			name = L["Enabled"],
+			name = L["Enable"],
 			desc = "",
 			get = function() return NameplateSCT.db.global.filterEnabled; end,
 			set = function(_, newValue) NameplateSCT.db.global.filterEnabled = newValue; end,
