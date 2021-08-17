@@ -166,7 +166,7 @@ local defaults = {
 			alpha = 0.5,
 		},
 		filterEnabled = false,
-		filter = {},
+		filter = "",
 	},
 };
 
@@ -1682,7 +1682,7 @@ local filters = {
 			type = "input",
 			name = L["Spells"],
 			multiline = 20,
-			desc = "Spellid/Spellname seperated by line\n\nWhite hits/melee = melee",
+			desc = L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"],
 			order = 2,
 			width = 1,
 			get = function() return NameplateSCT.db.global.filter; end,
