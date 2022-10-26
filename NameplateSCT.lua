@@ -669,7 +669,6 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 
 		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
 		destUnitId = tostring(destUnitId) or "1"
-		print(destUnitId)
 		if NameplateSCT.db.global.filterEnabled and npcFiltersTable[destUnitId] then return end
 
 		local destUnit = guidToUnit[destGUID];
