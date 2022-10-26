@@ -48,6 +48,8 @@ L["Reflected"] = true
 L["Resisted"] = true
 
 -- Options
+L["NPCs"] = true
+L["NPC id (eg: 23682) seperated by line\n\n The example is the Headless Horseman."] = true
 L["Spells"] = true
 L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"] = true
 L["YOUR ENEMY NAMEPLATES ARE DISABLED, NAMEPLATESCT WILL NOT WORK!!"] = true

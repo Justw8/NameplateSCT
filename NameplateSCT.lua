@@ -167,6 +167,7 @@ local defaults = {
 		},
 		filterEnabled = false,
 		filter = "",
+		npcFilter = "",
 	},
 };
 
@@ -178,6 +179,17 @@ function NameplateSCT:updateFilterTable(filterData)
 	filtersTable = {}
 	for _, spellInfo in ipairs(splitData) do
 		filtersTable[spellInfo] = true
+	end
+end
+
+local npcFiltersTable = {}
+
+function NameplateSCT:updateNPCFilterTable(npcFilterData)
+	NameplateSCT.db.global.npcFilter = npcFilterData
+	local splitData = {strsplit("\n", npcFilterData)}
+	npcFiltersTable = {}
+	for _, npcId in ipairs(splitData) do
+		npcFiltersTable[npcId] = true
 	end
 end
 
@@ -341,18 +353,18 @@ local function recycleFontString(fontString)
 	fontString.NSCTFontSize = nil;
 
 	if fontString.icon then
-	fontString.icon:ClearAllPoints();
-	fontString.icon:SetAlpha(0);
-	fontString.icon:Hide();
-	if fontString.icon.button then
-		NameplateSCT.frame.MSQGroup:RemoveButton(fontString.icon.button)
-		fontString.icon.button:Hide();
-		fontString.icon.button:ClearAllPoints();
-	end
+		fontString.icon:ClearAllPoints();
+		fontString.icon:SetAlpha(0);
+		fontString.icon:Hide();
+		if fontString.icon.button then
+			NameplateSCT.frame.MSQGroup:RemoveButton(fontString.icon.button)
+			fontString.icon.button:Hide();
+			fontString.icon.button:ClearAllPoints();
+		end
 
-	fontString.icon.anchorFrame = nil;
-	fontString.icon.unit = nil;
-	fontString.icon.guid = nil;
+		fontString.icon.anchorFrame = nil;
+		fontString.icon.unit = nil;
+		fontString.icon.guid = nil;
 	end
 
 	fontString:SetFont(getFontPath(NameplateSCT.db.global.font), 15, NameplateSCT.db.global.fontFlag);
@@ -402,6 +414,7 @@ function NameplateSCT:OnInitialize()
 
 	-- Update Filters
 	self:updateFilterTable(self.db.global.filter)
+	self:updateNPCFilterTable(self.db.global.npcFilter)
 
 	-- if the addon is turned off in db, turn it off
 	if (self.db.global.enabled == false) then
@@ -653,6 +666,12 @@ end
 function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
 if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and playerGUID ~= destGUID then return end -- Cancel out any non player targetted abilities if you have personalSCT only enabled
 	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
+
+		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
+		destUnitId = tostring(destUnitId) or "1"
+		print(destUnitId)
+		if NameplateSCT.db.global.filterEnabled and npcFiltersTable[destUnitId] then return end
+
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
@@ -664,9 +683,8 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				else
 					spellId, spellName, _, amount, overkill, school, _, _, _, critical = ...;
 				end
-				if not filtersTable[tostring(spellId)] and not filtersTable[spellName] then
-					self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId);
-				end
+				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
+				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId);
 			elseif(string.find(clue, "_MISSED")) then
 				local spellName, missType, spellId;
 
@@ -679,12 +697,16 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				else
 					spellId, spellName, _, missType = ...;
 				end
-				if not filtersTable[tostring(spellId)] and not filtersTable[spellName] then
-					self:MissEvent(destGUID, spellName, missType, spellId);
-				end
+				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
+				self:MissEvent(destGUID, spellName, missType, spellId);
 			end
 		end
 	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
+
+		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
+		destUnitId = tostring(destUnitId) or "1"
+		if NameplateSCT.db.global.filterEnabled and npcFiltersTable[destUnitId] then return	end
+
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
@@ -696,9 +718,8 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				else
 					spellId, spellName, _, amount, overkill, _, _, _, _, critical = ...;
 				end
-				if not filtersTable[tostring(spellId)] and not filtersTable[spellName] then
-					self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId);
-				end
+				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
+				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
 				-- local spellName, spellSchool, missType, isOffHand, amountMissed;
 
@@ -711,7 +732,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				-- else
 					-- _, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
 				-- end
-				--if not filtersTable[tostring(spellId)] and not filtersTable[spellName] then
+				--if not NameplateSCT.db.global.filterEnabled and not filtersTable[tostring(spellId)] and not filtersTable[spellName] then
 				-- self:MissEvent(destGUID, spellName, missType);
 				--end
 				--
@@ -1669,7 +1690,7 @@ local filters = {
 	handler = NameplateSCT,
 	type = 'group',
 	args = {
-		enable = {
+		spellEnable = {
 			type = "toggle",
 			name = L["Enable"],
 			desc = "",
@@ -1687,6 +1708,16 @@ local filters = {
 			width = 1,
 			get = function() return NameplateSCT.db.global.filter; end,
 			set = function(_, newValue) NameplateSCT:updateFilterTable(newValue) end,
+		},
+		npcList = {
+			type = "input",
+			name = L["NPCs"],
+			multiline = 20,
+			desc = L["NPC id (eg: 23682) seperated by line\n\n The example is the Headless Horseman."],
+			order = 3,
+			width = 1,
+			get = function() return NameplateSCT.db.global.npcFilter; end,
+			set = function(_, newValue) NameplateSCT:updateNPCFilterTable(newValue) end,
 		}
 	},
 };
