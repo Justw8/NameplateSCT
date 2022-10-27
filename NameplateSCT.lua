@@ -665,12 +665,12 @@ end
 
 function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
 if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and playerGUID ~= destGUID then return end -- Cancel out any non player targetted abilities if you have personalSCT only enabled
-	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
-
+	if NameplateSCT.db.global.filterEnabled then -- Filter out mobId's if needed
 		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
 		destUnitId = tostring(destUnitId) or "1"
-		if NameplateSCT.db.global.filterEnabled and npcFiltersTable[destUnitId] then return end
-
+		if npcFiltersTable[destUnitId] then return end
+	end
+	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
@@ -701,11 +701,6 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 			end
 		end
 	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
-
-		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
-		destUnitId = tostring(destUnitId) or "1"
-		if NameplateSCT.db.global.filterEnabled and npcFiltersTable[destUnitId] then return	end
-
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
