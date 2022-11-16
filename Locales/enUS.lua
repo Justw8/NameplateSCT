@@ -47,7 +47,6 @@ L["Parried"] = true
 L["Reflected"] = true
 L["Resisted"] = true
 L[" Overkill("] = true
-L["Missed"] = true
 
 -- Options
 L["NPCs"] = true
