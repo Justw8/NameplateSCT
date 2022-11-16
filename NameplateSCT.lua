@@ -851,7 +851,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	end
 
 	if (overkill > 0 and self.db.global.shouldDisplayOverkill) then
-		text = self:ColorText(text.." Overkill("..overkill..")", guid, playerGUID, school, spellName);
+		text = self:ColorText(text..L[" Overkill("]..overkill..")", guid, playerGUID, school, spellName);
 		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName);
 	else
 		self:DisplayText(guid, text, size, animation, spellId, pow, spellName);
@@ -891,7 +891,7 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 
 	pow = true;
 
-	text = MISS_EVENT_STRINGS[missType] or "Missed";
+	text = MISS_EVENT_STRINGS[missType] or L["Missed"];
 	text = "|Cff"..color..text.."|r";
 
 	self:DisplayText(guid, text, size, animation, spellId, pow, spellName)
