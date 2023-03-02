@@ -531,6 +531,7 @@ local function AnimationOnUpdate()
 				end
 
 				local alpha = LibEasing.InExpo(elapsed, startAlpha, -startAlpha, fontString.animatingDuration);
+				if alpha > 1 then alpha = 1 elseif alpha < 0 then alpha = 0 end -- avoid rare occurences of eg: 1.0003 from the Lib being used to set Alpha
 				fontString:SetAlpha(alpha);
 
 				-- sizing
