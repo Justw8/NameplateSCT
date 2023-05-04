@@ -1,5 +1,5 @@
 ## Interface: 30401
-## Version: 1.30
+## Version: 1.31
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
