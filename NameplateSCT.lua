@@ -672,6 +672,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 		if npcFiltersTable[destUnitId] then return end
 	end
 	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
+
 		local destUnit = guidToUnit[destGUID];
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
@@ -682,6 +683,9 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 					spellName, amount, overkill, school, _, _, _, critical = ...;
 				else
 					spellId, spellName, _, amount, overkill, school, _, _, _, critical = ...;
+				end
+				if spellId and spellId == 0 then
+					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
 				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId);
@@ -696,6 +700,9 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 					end
 				else
 					spellId, spellName, _, missType = ...;
+				end
+				if spellId and spellId == 0 then
+					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
 				self:MissEvent(destGUID, spellName, missType, spellId);
@@ -713,6 +720,9 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				else
 					spellId, spellName, _, amount, overkill, _, _, _, _, critical = ...;
 				end
+				if spellId and spellId == 0 then
+					spellId = nil -- Don't pass spellId 0
+				end
 				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
 				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId);
 			-- elseif(string.find(clue, "_MISSED")) then -- Don't show pet MISS events for now.
@@ -726,6 +736,9 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 					-- end
 				-- else
 					-- _, spellName, spellSchool, missType, isOffHand, amountMissed = ...;
+				-- end
+				-- if spellId and spellId == 0 then
+				-- 	spellId = nil -- Don't pass spellId 0
 				-- end
 				--if not NameplateSCT.db.global.filterEnabled and not filtersTable[tostring(spellId)] and not filtersTable[spellName] then
 				-- self:MissEvent(destGUID, spellName, missType);
@@ -933,7 +946,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
 	fontString.unit = unit;
 	fontString.guid = guid;
 
-		local texture = GetSpellTexture(spellId or spellName);
+	local texture = GetSpellTexture(spellId or spellName);
 	if NameplateSCT.db.global.showIcon and texture then
 	icon = fontString.icon;
 	icon:Show();
@@ -995,8 +1008,7 @@ function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, 
 
 	fontString.unit = "player";
 	fontString.guid = guid;
-
-		local texture = GetSpellTexture(spellId or spellName);
+	local texture = GetSpellTexture(spellId or spellName);
 	if NameplateSCT.db.global.showIcon and texture then
 	icon = fontString.icon;
 	icon:Show();
