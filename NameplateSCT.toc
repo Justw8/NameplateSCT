@@ -1,5 +1,5 @@
-## Interface: 100100
-## Version: 1.31
+## Interface: 100200
+## Version: 1.32
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
