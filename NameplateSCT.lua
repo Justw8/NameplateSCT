@@ -967,8 +967,8 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
 
 	fontString.unit = unit;
 	fontString.guid = guid;
-	local texture
 
+	local texture
 	if GetSpellTexture then
 		texture = GetSpellTexture(spellId or spellName)
 	else
@@ -1035,6 +1035,7 @@ function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, 
 
 	fontString.unit = "player";
 	fontString.guid = guid;
+	
 	local texture
 	if GetSpellTexture then
 		texture = GetSpellTexture(spellId or spellName)
