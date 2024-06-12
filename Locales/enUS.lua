@@ -116,3 +116,9 @@ L["Scale down hits that are below a running average of your recent damage output
 L["Small Hits Scale"] = true
 L["Hide Small Hits"] = true
 L["Hide hits that are below a running average of your recent damage output"] = true
+L["Use Crit Color"] = true
+L["Crit Color"] = true
+L["X Variance"] = true
+L["Randomly varies the starting horizontal position of each damage number."] = true
+L["Y Variance"] = true
+L["Randomly varies the starting vertical position of each damage number."] = true
