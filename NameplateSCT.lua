@@ -160,7 +160,8 @@ local defaults = {
 			alpha = 1,
 		},
 
-		useOffTarget = true,
+		useOffTargetAppearance = true,
+		displayOffTargetText = true,
 		offTargetFormatting = {
 			size = 15,
 			alpha = 0.5,
@@ -548,7 +549,7 @@ local function AnimationOnUpdate()
 
 				-- alpha
 				local startAlpha = NameplateSCT.db.global.formatting.alpha;
-				if (NameplateSCT.db.global.useOffTarget and not isTarget and fontString.unit ~= "player") then
+				if (NameplateSCT.db.global.useOffTargetAppearance and not isTarget and fontString.unit ~= "player") then
 					startAlpha = NameplateSCT.db.global.offTargetFormatting.alpha;
 				end
 
@@ -815,7 +816,11 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	local unit = guidToUnit[guid];
 	local isTarget = unit and UnitIsUnit(unit, "target");
 
-	if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
+	if (not isTarget and not self.db.global.displayOffTargetText) then
+		return;
+	end
+
+	if (self.db.global.useOffTargetAppearance and not isTarget and playerGUID ~= guid) then
 		size = self.db.global.offTargetFormatting.size;
 		alpha = self.db.global.offTargetFormatting.alpha;
 	else
@@ -912,7 +917,7 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 	return;
 	end;
 
-	if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
+	if (self.db.global.useOffTargetAppearance and not isTarget and playerGUID ~= guid) then
 		size = self.db.global.offTargetFormatting.size;
 		alpha = self.db.global.offTargetFormatting.alpha;
 	else
@@ -1596,19 +1601,30 @@ local menu = {
 					order = 53,
 				},
 
-				useOffTarget = {
+				displayOffTargetText = {
+					type = 'toggle',
+					name = L['Display Off-Target Text'],
+					desc = "",
+					get = function() return NameplateSCT.db.global.displayOffTargetText; end,
+					set = function(_, newValue) NameplateSCT.db.global.displayOffTargetText = newValue; end,
+					order = 99,
+					width = "full",
+				},
+
+				useOffTargetAppearance = {
 					type = 'toggle',
 					name = L["Use Seperate Off-Target Text Appearance"],
 					desc = "",
-					get = function() return NameplateSCT.db.global.useOffTarget; end,
-					set = function(_, newValue) NameplateSCT.db.global.useOffTarget = newValue; end,
+					disabled = function() return not NameplateSCT.db.global.displayOffTargetText; end,
+					get = function() return NameplateSCT.db.global.useOffTargetAppearance; end,
+					set = function(_, newValue) NameplateSCT.db.global.useOffTargetAppearance = newValue; end,
 					order = 100,
 					width = "full",
 				},
 				offTarget = {
 					type = 'group',
 					name = L["Off-Target Text Appearance"],
-					hidden = function() return not NameplateSCT.db.global.useOffTarget; end,
+					hidden = function() return not NameplateSCT.db.global.useOffTargetAppearance or not NameplateSCT.db.global.displayOffTargetText; end,
 					order = 101,
 					inline = true,
 					args = {

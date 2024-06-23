@@ -104,6 +104,7 @@ L["Show Truncated Letter"] = true
 L["Comma Seperate"] = true
 L["Size"] = true
 L["Alpha"] = true
+L["Display Off-Target Text"] = true
 L["Use Seperate Off-Target Text Appearance"] = true
 L["Off-Target Text Appearance"] = true
 L["Sizing Modifiers"] = true
