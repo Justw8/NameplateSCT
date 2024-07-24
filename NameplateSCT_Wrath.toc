@@ -7,6 +7,7 @@
 ## OptionalDeps: Ace3, LibEasing
 
 ## X-Curse-Project-ID: 269544
+## X-Wago-ID: rN4VDxKD
 
 embeds.xml
 Locales\locale.xml
