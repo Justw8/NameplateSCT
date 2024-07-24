@@ -15,6 +15,8 @@ NameplateSCT.frame = CreateFrame("Frame", nil, UIParent);
 ------------
 local _;
 local animating = {};
+local randomX = {};
+local randomY = {};
 
 local playerGUID;
 local unitToGuid = {};
@@ -112,13 +114,17 @@ local defaults = {
 		fontShadow = false,
 		damageColor = true,
 		defaultColor = "ffff00",
+		useCritColor = false,
+		critColor = "ffff00",
 
-			showIcon = true,
+		showIcon = true,
 		enableMSQ = true,
 		iconScale = 1,
 		iconPosition = "RIGHT",
 		xOffsetIcon = 0,
 		yOffsetIcon = 0,
+		xVariance = 0,
+		yVariance = 0,
 
 		damageColorPersonal = false,
 		defaultColorPersonal = "ff0000",
@@ -355,6 +361,8 @@ local function recycleFontString(fontString)
 	fontString:Hide();
 
 	animating[fontString] = nil;
+	randomX[fontString] = nil;
+	randomY[fontString] = nil;
 
 	fontString.distance = nil;
 	fontString.arcTop = nil;
@@ -606,9 +614,9 @@ local function AnimationOnUpdate()
 
 				if (not UnitIsDead(fontString.unit) and fontString.anchorFrame and fontString.anchorFrame:IsShown()) then
 					if fontString.unit == "player" then -- player frame
-					fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffsetPersonal + xOffset, NameplateSCT.db.global.yOffsetPersonal + yOffset); -- Only allows for adjusting vertical offset
+					fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffsetPersonal + xOffset + randomX[fontString], NameplateSCT.db.global.yOffsetPersonal + yOffset + randomY[fontString]); -- Only allows for adjusting vertical offset
 					else -- nameplate frames
-					fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset, NameplateSCT.db.global.yOffset + yOffset);
+					fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset + randomX[fontString], NameplateSCT.db.global.yOffset + yOffset + randomY[fontString]);
 					end
 				else
 					recycleFontString(fontString);
@@ -653,6 +661,8 @@ function NameplateSCT:Animate(fontString, anchorFrame, duration, animation)
 	end
 
 	animating[fontString] = true;
+	randomX[fontString] = NameplateSCT.db.global.xVariance > 0 and math.random(-NameplateSCT.db.global.xVariance, NameplateSCT.db.global.xVariance) or 0;
+	randomY[fontString] = NameplateSCT.db.global.yVariance > 0 and math.random(-NameplateSCT.db.global.yVariance, NameplateSCT.db.global.yVariance) or 0;
 
 	-- start onupdate if it's not already running
 	if (NameplateSCT.frame:GetScript("OnUpdate") == nil) then
@@ -847,7 +857,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	end
 
 	-- color text
-	text = self:ColorText(text, guid, playerGUID, school, spellName);
+	text = self:ColorText(text, guid, playerGUID, school, spellName, crit);
 
 	-- shrink small hits
 	if (self.db.global.sizing.smallHits or self.db.global.sizing.smallHitsHide) and playerGUID ~= guid then
@@ -887,7 +897,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	end
 
 	if (overkill > 0 and self.db.global.shouldDisplayOverkill) then
-		text = self:ColorText(text.." Overkill("..overkill..")", guid, playerGUID, school, spellName);
+		text = self:ColorText(text.." Overkill("..overkill..")", guid, playerGUID, school, spellName, crit);
 		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName);
 	else
 		self:DisplayText(guid, text, size, animation, spellId, pow, spellName);
@@ -1078,10 +1088,12 @@ function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, 
 	self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation);
 end
 
-function NameplateSCT:ColorText(startingText, guid, playerGUID, school, spellName)
+function NameplateSCT:ColorText(startingText, guid, playerGUID, school, spellName, crit)
 	local finalText;
 	if guid ~= playerGUID then
-		if self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school] then
+		if crit and self.db.global.useCritColor then
+			finalText = "|Cff"..self.db.global.critColor..startingText.."|r";
+		elseif self.db.global.damageColor and school and DAMAGE_TYPE_COLORS[school] then
 			finalText = "|Cff"..DAMAGE_TYPE_COLORS[school]..startingText.."|r";
 		elseif self.db.global.damageColor and spellName == "melee" and DAMAGE_TYPE_COLORS[spellName] then
 			finalText = "|Cff"..DAMAGE_TYPE_COLORS[spellName]..startingText.."|r";
@@ -1320,6 +1332,70 @@ local menu = {
 					order = 5,
 				},
 
+				critColorNewLine = {
+					type = 'description',
+					name = "",
+					desc = "",
+					order = 6,
+				},
+				
+				useCritColor = {
+					type = 'toggle',
+					name = L["Use Crit Color"],
+					desc = "",
+					get = function() return NameplateSCT.db.global.useCritColor; end,
+					set = function(_, newValue) NameplateSCT.db.global.useCritColor = newValue; end,
+					order = 7,
+				},
+
+				critColor = {
+					type = 'color',
+					name = L["Crit Color"],
+					desc = "",
+					disabled = function() return not NameplateSCT.db.global.useCritColor; end,
+					hasAlpha = false,
+					set = function(_, r, g, b) NameplateSCT.db.global.critColor = rgbToHex(r, g, b); end,
+					get = function() return hexToRGB(NameplateSCT.db.global.critColor); end,
+					order = 8,
+				},
+
+				offsetNewLine = {
+					type = 'description',
+					name = "",
+					desc = "",
+					order = 9,
+				},
+
+				targetStrata = {
+					type = 'select',
+					name = L["Target Strata"],
+					desc = "",
+					get = function() return NameplateSCT.db.global.strata.target; end,
+					set = function(_, newValue) NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
+					values = stratas,
+					order = 10,
+				},
+
+				modOffTargetStrata = {
+					type = 'toggle',
+					name = L["Use Separate Off-Target Strata"],
+					desc = "",
+					get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
+					set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
+					order = 11,
+				},
+
+				offTargetStrata = {
+					type = 'select',
+					name = L["Off-Target Strata"],
+					desc = "",
+					disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
+					get = function() return NameplateSCT.db.global.strata.offTarget; end,
+					set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end,
+					values = stratas,
+					order = 12,
+				},
+
 				xOffset = {
 					type = 'range',
 					name = L["X Offset"],
@@ -1329,7 +1405,7 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.xOffset; end,
 					set = function(_, newValue) NameplateSCT.db.global.xOffset = newValue; end,
-					order = 10,
+					order = 13,
 					width = "full",
 				},
 
@@ -1342,38 +1418,34 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.yOffset; end,
 					set = function(_, newValue) NameplateSCT.db.global.yOffset = newValue; end,
-					order = 11,
+					order = 14,
 					width = "full",
 				},
 
-				modOffTargetStrata = {
-					type = 'toggle',
-					name = L["Use Separate Off-Target Strata"],
-					desc = "",
-					get = function() return NameplateSCT.db.global.modOffTargetStrata; end,
-					set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue; end,
-					order = 8,
+				xVariance = {
+					type = 'range',
+					name = L["X Variance"],
+					desc = L["Randomly varies the starting horizontal position of each damage number."],
+					min = 0,
+					softMax = 75,
+					step = 1,
+					get = function() return NameplateSCT.db.global.xVariance; end,
+					set = function(_, newValue) NameplateSCT.db.global.xVariance = newValue; end,
+					order = 15,
+					width = "full",
 				},
 
-				targetStrata = {
-					type = 'select',
-					name = L["Target Strata"],
-					desc = "",
-					get = function() return NameplateSCT.db.global.strata.target; end,
-					set = function(_, newValue) NameplateSCT.db.global.strata.target = newValue; adjustStrata(); end,
-					values = stratas,
-					order = 9,
-				},
-
-				offTargetStrata = {
-					type = 'select',
-					name = L["Off-Target Strata"],
-					desc = "",
-					disabled = function() return not NameplateSCT.db.global.modOffTargetStrata; end,
-					get = function() return NameplateSCT.db.global.strata.offTarget; end,
-					set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue; end,
-					values = stratas,
-					order = 10,
+				yVariance = {
+					type = 'range',
+					name = L["Y Variance"],
+					desc = L["Randomly varies the starting vertical position of each damage number."],
+					min = 0,
+					softMax = 75,
+					step = 1,
+					get = function() return NameplateSCT.db.global.yVariance; end,
+					set = function(_, newValue) NameplateSCT.db.global.yVariance = newValue; end,
+					order = 16,
+					width = "full",
 				},
 				iconAppearance = {
 				type = 'group',
