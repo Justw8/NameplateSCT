@@ -21,4 +21,4 @@ jobs:
 
 
       - name: Package and release
-        uses: Justw8/packager@master
+        uses: BigWigsMods/packager@master
