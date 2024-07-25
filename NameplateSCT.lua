@@ -104,6 +104,7 @@ local defaults = {
 	global = {
 		enabled = true,
 		shouldDisplayOverkill = false,
+		showAbsorbDamage = true,
 		xOffset = 0,
 		yOffset = 0,
 		personalOnly = false,
@@ -750,33 +751,28 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
 				end
-				if absorbed then
-					amount = amount + absorbed -- Add shield to damage
-				end
 				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
-				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId);
-
+				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId, absorbed);
 			elseif(string.find(clue, "_MISSED")) then
-				local spellName, missType, spellId, amount, school;
+				local spellName, missType, spellId, amount, school
 
 				if (string.find(clue, "SWING")) then
 					if destGUID == playerGUID then
-					missType, _, amount, critical = ...;
+						missType, _, amount, critical = ...
 					else
-					missType, _, amount, critical = "melee", ...;
+						missType, _, amount, critical = "melee", ...
 					end
 				else
-					spellId, spellName, school, missType, _, amount, critical = ...;
+					spellId, spellName, school, missType, _, amount, critical = ...
 				end
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
-				
 				if missType == "ABSORB" then --Show absorbed as damage
-					self:DamageEvent(destGUID, spellName, amount, -1, school, critical, spellId);
+					self:DamageEvent(destGUID, spellName, 0, -1, school, critical, spellId, amount)
 				else
-					self:MissEvent(destGUID, spellName, missType, spellId);
+					self:MissEvent(destGUID, spellName, missType, spellId)
 				end
 			end
 		end
@@ -795,12 +791,8 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
 				end
-				if absorbed then
-					amount = amount + absorbed -- Add shield to damage
-				end
 				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
-				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId);
-				
+				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId, absorbed);
 			elseif(string.find(clue, "_MISSED")) then -- Check for absorbed damage
 				local spellName, missType, spellId, amount;
 
@@ -817,11 +809,9 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
-				
 				if missType == "ABSORB" then
-					self:DamageEvent(destGUID, spellName, amount, -1, "pet", critical, spellId);
+					self:DamageEvent(destGUID, spellName, 0, -1, "pet", critical, spellId, amount);
 				end
-
 			end
 		end
 	end
@@ -844,7 +834,7 @@ end
 local numDamageEvents = 0;
 local lastDamageEventTime;
 local runningAverageDamageEvents = 0;
-function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, crit, spellId)
+function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, crit, spellId, absorbed)
 	local text, animation, pow, size, alpha;
 	local autoattack = spellName == "melee" or spellName == "pet";
 
@@ -902,6 +892,9 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 		end
 	end
 
+	if NameplateSCT.db.global.showAbsorbDamage and absorbed > 0 then
+		text = L["%s (A: %s)"]:format(text, absorbed)
+	end
 	-- color text
 	text = self:ColorText(text, guid, playerGUID, school, spellName, crit);
 
@@ -1213,9 +1206,24 @@ local menu = {
 			type = 'toggle',
 			name = L["Display Overkill"],
 			desc = L["Display your overkill for a target over your own nameplate"],
-			get = function() return NameplateSCT.db.global.shouldDisplayOverkill; end,
-			set = function(_, newValue) NameplateSCT.db.global.shouldDisplayOverkill = newValue; end,
+			get = function() return NameplateSCT.db.global.shouldDisplayOverkill end,
+			set = function(_, newValue) NameplateSCT.db.global.shouldDisplayOverkill = newValue end,
 			order = 6,
+		},
+
+		showAbsorbs = {
+			type = 'toggle',
+			name = L["Show Absorbed Damage"],
+			desc = L["Show Absorbed Damage shown as: '5 (A: 3)' where A: 3 is the absorbed amount"],
+			get = function() return NameplateSCT.db.global.showAbsorbDamage end,
+			set = function(_, newValue) NameplateSCT.db.global.showAbsorbDamage = newValue end,
+			order = 6.3,
+		},
+
+		divider = {
+			type = 'description',
+			name = "",
+			order = 6.6,
 			width = "full",
 		},
 

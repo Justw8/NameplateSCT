@@ -1,5 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "enUS", true)
 
+-- Absorb Formatting
+L["%s (A: %s)"] = true -- A for Absorb
+
 -- Animation Values
 L["Shake"] = true
 L["Vertical Up"] = true
