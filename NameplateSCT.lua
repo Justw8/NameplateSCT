@@ -918,8 +918,11 @@ local numDamageEvents = 0
 local lastDamageEventTime
 local runningAverageDamageEvents = 0
 function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, crit, spellId, absorbed)
+	local amount = amount or 0
+	local absorbed = absorbed or 0
+
 	-- Hide small hits based on threshold
-	if (self.db.global.sizing.hideSmallHitsThreshold > 0 and self.db.global.sizing.hideSmallHitsThreshold > (amount+absorbed)) then
+	if self.db.global.sizing.hideSmallHitsThreshold > (amount + absorbed) then
 		return
 	end
 
