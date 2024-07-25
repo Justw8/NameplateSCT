@@ -77,9 +77,9 @@ local positionValues = {
 }
 
 local truncateMethod = {
-	['NONE'] = L['Do Not Truncate'],
-	['WESTERN'] = L['Western'],
-	['EASTASIA'] = L['East Asia'],
+	['NONE'] = L["Do Not Truncate"],
+	['WESTERN'] = L["Western"],
+	['EASTASIA'] = L["East Asia"],
 }
 
 local inversePositions = {
