@@ -894,6 +894,11 @@ local numDamageEvents = 0
 local lastDamageEventTime
 local runningAverageDamageEvents = 0
 function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, crit, spellId, absorbed)
+	-- Hide small hits based on threshold
+	if (self.db.global.sizing.hideSmallHitsThreshold > 0 and self.db.global.sizing.hideSmallHitsThreshold > (amount+absorbed)) then
+		return
+	end
+
 	local text, animation, pow, size, alpha
 	local autoattack = spellName == "melee" or spellName == "pet"
 
@@ -955,7 +960,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 
 		if ((not crit and amount < SMALL_HIT_MULTIPIER*runningAverageDamageEvents)
 			or (crit and amount/2 < SMALL_HIT_MULTIPIER*runningAverageDamageEvents)) then
-			if (self.db.global.sizing.smallHitsHide) then
+			if self.db.global.sizing.smallHitsHide then
 				-- skip this damage event, it's too small
 				return
 			else
@@ -1878,6 +1883,19 @@ local menu = {
 					get = function() return NameplateSCT.db.global.sizing.smallHitsHide end,
 					set = function(_, newValue) NameplateSCT.db.global.sizing.smallHitsHide = newValue end,
 					order = 22,
+				},
+				hideSmallHitsThreshold = {
+					type = 'range',
+					name = L["Hide Hits Threshold"],
+					desc = L["Hide hits that are below this threshold."],
+					min = 0,
+					max = 10000000,
+					softMax = 10000,
+					step = 1,
+					get = function() return NameplateSCT.db.global.sizing.hideSmallHitsThreshold end,
+					set = function(_, newValue) NameplateSCT.db.global.sizing.hideSmallHitsThreshold = newValue end,
+					order = 23,
+					width = "full",
 				},
 			},
 		},

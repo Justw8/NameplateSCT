@@ -131,3 +131,5 @@ L["X Variance"] = true
 L["Randomly varies the starting horizontal position of each damage number."] = true
 L["Y Variance"] = true
 L["Randomly varies the starting vertical position of each damage number."] = true
+L["Hide Hits Threshold"] = true
+L["Hide hits that are below this threshold."] = true
