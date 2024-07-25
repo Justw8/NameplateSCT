@@ -187,6 +187,7 @@ local defaults = {
 			alpha = 0.5,
 		},
 		filterEnabled = false,
+		inverseFilter = false,
 		filter = "",
 		npcFilter = "",
 	},
@@ -740,7 +741,10 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 	if NameplateSCT.db.global.filterEnabled then -- Filter out mobId's if needed
 		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
 		destUnitId = tostring(destUnitId) or "1"
-		if npcFiltersTable[destUnitId] then return end
+		if (NameplateSCT.db.global.inverseFilter and not npcFiltersTable[destUnitId]) -- Inverse filter
+			or
+		(not NameplateSCT.db.global.inverseFilter and npcFiltersTable[destUnitId]) -- Normal Filter
+		then return end
 	end
 	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
 
@@ -758,7 +762,12 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
 				end
-				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
+				if NameplateSCT.db.global.filterEnabled then
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
+					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+						return
+					end
+				end
 				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId, absorbed)
 			elseif(string.find(clue, "_MISSED")) then
 				local spellName, missType, spellId, amount, school
@@ -775,7 +784,12 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
 				end
-				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
+				if NameplateSCT.db.global.filterEnabled then
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
+					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+						return
+					end
+				end
 				if missType == "ABSORB" then --Show absorbed as damage
 					self:DamageEvent(destGUID, spellName, 0, -1, school, critical, spellId, amount)
 				else
@@ -798,7 +812,12 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
 				end
-				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
+				if NameplateSCT.db.global.filterEnabled then
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
+					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+						return
+					end
+				end
 				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId, absorbed)
 			elseif(string.find(clue, "_MISSED")) then -- Check for absorbed damage
 				local spellName, missType, spellId, amount
@@ -815,7 +834,12 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
 				end
-				if NameplateSCT.db.global.filterEnabled and (filtersTable[tostring(spellId)] or filtersTable[spellName]) then return end
+				if NameplateSCT.db.global.filterEnabled then
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
+					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+						return
+					end
+				end
 				if missType == "ABSORB" then
 					self:DamageEvent(destGUID, spellName, 0, -1, "pet", critical, spellId, amount)
 				end
@@ -1907,14 +1931,23 @@ local filters = {
 	handler = NameplateSCT,
 	type = 'group',
 	args = {
-		spellEnable = {
+		enable = {
 			type = "toggle",
 			name = L["Enable"],
 			desc = "",
 			get = function() return NameplateSCT.db.global.filterEnabled end,
 			set = function(_, newValue) NameplateSCT.db.global.filterEnabled = newValue end,
 			order = 1,
-			width = "full",
+			width = "half",
+		},
+		inverseFilter = {
+			type = "toggle",
+			name = L["Inverse Filter"],
+			desc = L["Inverse the logic, and only show the spells and npc's in the list instead of filtering them away."],
+			get = function() return NameplateSCT.db.global.inverseFilter end,
+			set = function(_, newValue) NameplateSCT.db.global.inverseFilter = newValue end,
+			order = 1.5,
+			width = "half",
 		},
 		spellList = {
 			type = "input",
