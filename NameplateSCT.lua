@@ -1009,7 +1009,7 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
 	fontString.unit = unit
 	fontString.guid = guid
 
-	local texture = GetSpellTexture(spellId or spellName)
+	local texture = GetSpellTexture(spellId or spellName or "")
 	if NameplateSCT.db.global.showIcon and texture then
 		icon = fontString.icon
 		icon:Show()
@@ -1060,24 +1060,24 @@ function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, 
 	fontString:SetText(fontString.NSCTText);
 
 	fontString.NSCTFontSize = size;
-	fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag);
+	fontString:SetFont(getFontPath(NameplateSCT.db.global.font), fontString.NSCTFontSize, NameplateSCT.db.global.fontFlag)
 	if NameplateSCT.db.global.textShadow then fontString:SetShadowOffset(1,-1) else fontString:SetShadowOffset(0, 0) end
 	fontString.startHeight = fontString:GetStringHeight();
 	fontString.pow = pow;
 
 	if (fontString.startHeight <= 0) then
-		fontString.startHeight = 5;
+		fontString.startHeight = 5
 	end
 
-	fontString.unit = "player";
-	fontString.guid = guid;
-	local texture = GetSpellTexture(spellId or spellName);
+	fontString.unit = "player"
+	fontString.guid = guid
+	local texture = GetSpellTexture(spellId or spellName or "")
 	if NameplateSCT.db.global.showIcon and texture then
-	icon = fontString.icon;
-	icon:Show();
+	icon = fontString.icon
+	icon:Show()
 	icon:SetTexture(texture);
 	if MSQ and NameplateSCT.db.global.enableMSQ then
-		icon.button:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
+		icon.button:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale)
 		icon.button:SetPoint(
 		inversePositions[NameplateSCT.db.global.iconPosition],
 		fontString,
@@ -1087,7 +1087,7 @@ function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, 
 		)
 		icon.button:Show()
 	else
-		icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale);
+		icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale)
 		icon:SetPoint(
 		inversePositions[NameplateSCT.db.global.iconPosition],
 		fontString,
