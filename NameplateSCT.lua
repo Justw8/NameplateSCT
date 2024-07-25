@@ -158,6 +158,7 @@ local defaults = {
 			smallHitsScale = 0.66,
 			smallHitsHide = false,
 			autoattackcritsizing = true,
+			hideSmallHitsThreshold = 0,
 		},
 
 		animations = {
