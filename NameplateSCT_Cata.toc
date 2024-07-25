@@ -1,5 +1,5 @@
 ## Interface: 40400
-## Version: 1.36
+## Version: 1.37
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
