@@ -363,7 +363,7 @@ local function getFontString()
 			local buttonData = {
 				Icon = fontString.icon
 			}
-			frame.MSQGroup:AddButton(fontString.icon.button, buttonData)
+			NameplateSCT.frame.MSQGroup:AddButton(fontString.icon.button, buttonData)
 		end
 		if fontString.icon.button then
 			fontString.icon.button:Show()
