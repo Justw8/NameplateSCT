@@ -831,12 +831,14 @@ end
 -------------
 -- DISPLAY --
 -------------
+
 local function commaSeperate(number)
 	-- https://stackoverflow.com/questions/10989788/lua-format-integer
 	local _, _, minus, int, fraction = tostring(number):find('([-]?)(%d+)([.]?%d*)')
 	int = int:reverse():gsub("(%d%d%d)", "%1,")
 	return minus..int:reverse():gsub("^,", "")..fraction
 end
+
 function NameplateSCT:truncateText(amount)
 	local text = ''
 	if self.db.global.truncateMethod == 'NONE' then
@@ -1714,6 +1716,12 @@ local menu = {
 					set = function(_, newValue) NameplateSCT.db.global.commaSeperate = newValue end,
 					order = 3,
 				},
+				divider = {
+					type = 'description',
+					name = "",
+					order = 50,
+					width = "full",
+				},
 				size = {
 					type = 'range',
 					name = L["Size"],
@@ -1760,7 +1768,7 @@ local menu = {
 				offTarget = {
 					type = 'group',
 					name = L["Off-Target Text Appearance"],
-					hidden = function() return not NameplateSCT.db.global.useOffTargetAppearance or not NameplateSCT.db.global.displayOffTargetText end,
+					disabled = function() return not NameplateSCT.db.global.useOffTargetAppearance or not NameplateSCT.db.global.displayOffTargetText end,
 					order = 101,
 					inline = true,
 					args = {
