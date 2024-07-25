@@ -103,10 +103,16 @@ L["Y Offset Personal SCT"] = true
 L["Only used if Personal Nameplate is Disabled"] = true
 L["Text Formatting"] = true
 L["Truncate Number"] = true
+L["Truncate Method:\n\nWestern:\n  1000=>1K,\n  1000K=>1M\nAsia East:\n  10000=>1w"] = true
+L["Truncate Letter East Asia"] = true
+L['Do Not Truncate'] = true
+L['Western'] = true
+L['East Asia'] = true
 L["Show Truncated Letter"] = true
 L["Comma Seperate"] = true
 L["Size"] = true
 L["Alpha"] = true
+L["Display Off-Target Text"] = true
 L["Use Seperate Off-Target Text Appearance"] = true
 L["Off-Target Text Appearance"] = true
 L["Sizing Modifiers"] = true

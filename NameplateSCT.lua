@@ -76,6 +76,12 @@ local positionValues = {
 	["CENTER"]  = L["Center"]
 }
 
+local truncateMethod = {
+	['NONE'] = L['Do Not Truncate'],
+	['WESTERN'] = L['Western'],
+	['EASTASIA'] = L['East Asia'],
+}
+
 local inversePositions = {
 	["BOTTOM"] = "TOP",
 	["LEFT"] = "RIGHT",
@@ -137,7 +143,7 @@ local defaults = {
 		damageColorPersonal = false,
 		defaultColorPersonal = "ff0000",
 
-		truncate = true,
+		truncateMethod = 'WESTERN',
 		truncateLetter = true,
 		commaSeperate = true,
 
@@ -174,7 +180,8 @@ local defaults = {
 			alpha = 1,
 		},
 
-		useOffTarget = true,
+		useOffTargetAppearance = true,
+		displayOffTargetText = true,
 		offTargetFormatting = {
 			size = 15,
 			alpha = 0.5,
@@ -589,7 +596,7 @@ local function AnimationOnUpdate()
 
 				-- alpha
 				local startAlpha = NameplateSCT.db.global.formatting.alpha;
-				if (NameplateSCT.db.global.useOffTarget and not isTarget and fontString.unit ~= "player") then
+				if (NameplateSCT.db.global.useOffTargetAppearance and not isTarget and fontString.unit ~= "player") then
 					startAlpha = NameplateSCT.db.global.offTargetFormatting.alpha;
 				end
 
@@ -830,6 +837,56 @@ local function commaSeperate(number)
 	int = int:reverse():gsub("(%d%d%d)", "%1,");
 	return minus..int:reverse():gsub("^,", "")..fraction;
 end
+function NameplateSCT:truncateText(amount)
+	local text = ''
+	if self.db.global.truncateMethod == 'NONE' then
+		if (self.db.global.commaSeperate) then
+			text = commaSeperate(amount);
+		else
+			text = tostring(amount)
+		end
+
+	elseif self.db.global.truncateMethod == 'WESTERN' then
+		local unitLetter = ''
+		if self.db.global.truncateLetter then
+			unitLetter = 'k'
+		end
+
+		if amount >= 1000000 and self.db.global.truncateLetter then
+			text = string.format("%.1fM", amount / 1000000);
+		elseif amount >= 10000 then
+			text = string.format("%.0f%s", amount / 1000, unitLetter);
+		elseif amount >= 1000 then
+			text = string.format("%.1f%s", amount / 1000, unitLetter);
+		else
+			text = tostring(amount)
+		end
+	elseif self.db.global.truncateMethod == 'EASTASIA' then
+
+		local unitLetter = ''
+		if self.db.global.truncateLetter then
+			unitLetter = L["Truncate Letter East Asia"]
+			if unitLetter == 'Truncate Letter East Asia' then
+				-- miss locale, Use its pronunciation instead
+				-- 'w' means 'wan', 1wan = 10000
+				unitLetter = 'w'
+			end
+		end
+
+		if amount >= 100000 then
+			text = string.format("%.0f%s", amount / 10000, unitLetter)
+		elseif amount >= 10000 then
+			text = string.format("%.1f%s", amount / 10000, unitLetter)
+		else
+			text = tostring(amount)
+		end
+	else
+		-- Never reach
+		text = tostring(amount)
+	end
+
+	return text
+end
 
 local numDamageEvents = 0;
 local lastDamageEventTime;
@@ -861,7 +918,11 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	local unit = guidToUnit[guid];
 	local isTarget = unit and UnitIsUnit(unit, "target");
 
-	if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
+	if (not isTarget and not self.db.global.displayOffTargetText) then
+		return;
+	end
+
+	if (self.db.global.useOffTargetAppearance and not isTarget and playerGUID ~= guid) then
 		size = self.db.global.offTargetFormatting.size;
 		alpha = self.db.global.offTargetFormatting.alpha;
 	else
@@ -870,27 +931,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	end
 
 	-- truncate
-	if (self.db.global.truncate and amount >= 1000000 and self.db.global.truncateLetter) then
-		text = string.format("%.1fM", amount / 1000000);
-	elseif (self.db.global.truncate and amount >= 10000) then
-		text = string.format("%.0f", amount / 1000);
-
-		if (self.db.global.truncateLetter) then
-			text = text.."k";
-		end
-	elseif (self.db.global.truncate and amount >= 1000) then
-		text = string.format("%.1f", amount / 1000);
-
-		if (self.db.global.truncateLetter) then
-			text = text.."k";
-		end
-	else
-		if (self.db.global.commaSeperate) then
-			text = commaSeperate(amount);
-		else
-			text = tostring(amount);
-		end
-	end
+	text = self:truncateText(amount)
 
 	if NameplateSCT.db.global.showAbsorbDamage and absorbed > 0 then
 		text = L["%s (A: %s)"]:format(text, absorbed)
@@ -961,7 +1002,7 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 	return;
 	end;
 
-	if (self.db.global.useOffTarget and not isTarget and playerGUID ~= guid) then
+	if (self.db.global.useOffTargetAppearance and not isTarget and playerGUID ~= guid) then
 		size = self.db.global.offTargetFormatting.size;
 		alpha = self.db.global.offTargetFormatting.alpha;
 	else
@@ -1643,19 +1684,21 @@ local menu = {
 			inline = true,
 			disabled = function() return not NameplateSCT.db.global.enabled; end;
 			args = {
-				truncate = {
-					type = 'toggle',
+				truncateMethod = {
+					type = 'select',
 					name = L["Truncate Number"],
-					desc = "",
-					get = function() return NameplateSCT.db.global.truncate; end,
-					set = function(_, newValue) NameplateSCT.db.global.truncate = newValue; end,
+					desc = L["Truncate Method:\n\nWestern:\n  1000=>1K,\n  1000K=>1M\nAsia East:\n  10000=>1w"],
+					get = function() return NameplateSCT.db.global.truncateMethod; end,
+					set = function(_, newValue) NameplateSCT.db.global.truncateMethod = newValue; end,
+					values = truncateMethod,
 					order = 1,
 				},
 				truncateLetter = {
 					type = 'toggle',
 					name = L["Show Truncated Letter"],
 					desc = "",
-					disabled = function() return not NameplateSCT.db.global.enabled or not NameplateSCT.db.global.truncate; end,
+					hidden = function () return NameplateSCT.db.global.truncateMethod == 'NONE'; end,
+					-- disabled = function() return not NameplateSCT.db.global.enabled or NameplateSCT.db.global.truncateMethod == 'NONE'; end,
 					get = function() return NameplateSCT.db.global.truncateLetter; end,
 					set = function(_, newValue) NameplateSCT.db.global.truncateLetter = newValue; end,
 					order = 2,
@@ -1664,7 +1707,8 @@ local menu = {
 					type = 'toggle',
 					name = L["Comma Seperate"],
 					desc = "100000 -> 100,000",
-					disabled = function() return not NameplateSCT.db.global.enabled or NameplateSCT.db.global.truncate; end,
+					hidden = function() return NameplateSCT.db.global.truncateMethod ~= 'NONE'; end,
+					-- disabled = function() return not NameplateSCT.db.global.enabled or NameplateSCT.db.global.truncateMethod ~= 'WESTERN'; end,
 					get = function() return NameplateSCT.db.global.commaSeperate; end,
 					set = function(_, newValue) NameplateSCT.db.global.commaSeperate = newValue; end,
 					order = 3,
@@ -1692,19 +1736,30 @@ local menu = {
 					order = 53,
 				},
 
-				useOffTarget = {
+				displayOffTargetText = {
+					type = 'toggle',
+					name = L['Display Off-Target Text'],
+					desc = "",
+					get = function() return NameplateSCT.db.global.displayOffTargetText; end,
+					set = function(_, newValue) NameplateSCT.db.global.displayOffTargetText = newValue; end,
+					order = 99,
+					width = "full",
+				},
+
+				useOffTargetAppearance = {
 					type = 'toggle',
 					name = L["Use Seperate Off-Target Text Appearance"],
 					desc = "",
-					get = function() return NameplateSCT.db.global.useOffTarget; end,
-					set = function(_, newValue) NameplateSCT.db.global.useOffTarget = newValue; end,
+					disabled = function() return not NameplateSCT.db.global.displayOffTargetText; end,
+					get = function() return NameplateSCT.db.global.useOffTargetAppearance; end,
+					set = function(_, newValue) NameplateSCT.db.global.useOffTargetAppearance = newValue; end,
 					order = 100,
 					width = "full",
 				},
 				offTarget = {
 					type = 'group',
 					name = L["Off-Target Text Appearance"],
-					hidden = function() return not NameplateSCT.db.global.useOffTarget; end,
+					hidden = function() return not NameplateSCT.db.global.useOffTargetAppearance or not NameplateSCT.db.global.displayOffTargetText; end,
 					order = 101,
 					inline = true,
 					args = {
