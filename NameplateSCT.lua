@@ -21,6 +21,7 @@ local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture or GetSpellTexture
 ------------
 
 local _
+local optionsMenuName
 local animating = {}
 local randomX = {}
 local randomY = {}
@@ -1977,14 +1978,12 @@ local filters = {
 }
 
 function NameplateSCT:OpenMenu()
-	-- just open to the frame, double call because blizz bug
-	InterfaceOptionsFrame_OpenToCategory(self.menu)
-	InterfaceOptionsFrame_OpenToCategory(self.menu)
+	Settings.OpenToCategory(optionsMenuName)
 end
 
 function NameplateSCT:RegisterMenu()
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("NameplateSCT", menu)
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Filters", filters)
-	self.menu = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("NameplateSCT", "NameplateSCT")
+	_, optionsMenuName = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("NameplateSCT", "NameplateSCT")
 	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Filters", "Filters", "NameplateSCT")
 end
