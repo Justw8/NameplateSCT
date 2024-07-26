@@ -2,6 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "koKR")
 if not L then return end
 
 --L["%s (A: %s)"] = "%s (A: %s)" -- A for Absorb
+--L["%s (O: %s)"] = "%s (O: %s)" -- O for Overkill
 L["Abilities"] = "능력"
 L["Absorbed"] = "흡수"
 L["Alpha"] = "투명도"
@@ -43,6 +44,7 @@ L["Embiggen Miss/Parry/Dodge/etc"] = "빗나감/막음/피함/기타 크게"
 L["Enable Masque"] = "Masque 사용"
 L["Enable"] = "사용"
 L["Evaded"] = "벗어남"
+--L["Filters"] = "Filters"
 L["Font Flags"] = "글꼴 외곽선"
 L["Font"] = "글꼴"
 L["Fountain"] = "분수"

@@ -1,6 +1,7 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "enUS", true)
 
 L["%s (A: %s)"] = true -- A for Absorb
+L["%s (O: %s)"] = true -- O for Overkill
 L["Abilities"] = true
 L["Absorbed"] = true
 L["Alpha"] = true
@@ -76,7 +77,6 @@ L["Off-Target Strata"] = true
 L["Off-Target Text Appearance"] = true
 L["Only used if Personal Nameplate is Disabled"] = true
 L["Outline"] = true
-L[" Overkill("] = true
 L["Parried"] = true
 L["Personal SCT Animations"] = true
 L["Personal SCT Only"] = true

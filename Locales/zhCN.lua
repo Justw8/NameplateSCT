@@ -2,6 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "zhCN")
 if not L then return end
 
 L["%s (A: %s)"] = "%s (A: %s)" -- A for Absorb
+--L["%s (O: %s)"] = "%s (O: %s)" -- O for Overkill
 L["Abilities"] = "技能"
 L["Absorbed"] = "吸收"
 L["Alpha"] = "透明度"
@@ -77,7 +78,6 @@ L["Off-Target Strata"] = "非当前目标层级"
 L["Off-Target Text Appearance"] = "非当前目标文字外观"
 L["Only used if Personal Nameplate is Disabled"] = "只有停用个人血条时使用"
 L["Outline"] = "轮廓"
-L[" Overkill("] = "击杀(过量:"
 L["Parried"] = "招架"
 L["Personal SCT Animations"] = "个人浮动战斗文字动画"
 L["Personal SCT Only"] = "只有个人浮动战斗文字"

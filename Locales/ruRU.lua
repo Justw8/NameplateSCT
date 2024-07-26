@@ -2,6 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "ruRU")
 if not L then return end
 
 --L["%s (A: %s)"] = "%s (A: %s)" -- A for Absorb
+--L["%s (O: %s)"] = "%s (O: %s)" -- O for Overkill
 L["Abilities"] = "Способности"
 L["Absorbed"] = "Поглощение"
 L["Alpha"] = "Прозрачность"
@@ -43,6 +44,7 @@ L["Embiggen Miss/Parry/Dodge/etc"] = "Увеличение Промахов/Па
 L["Enable Masque"] = "Включить Masque"
 L["Enable"] = "Включить"
 L["Evaded"] = "Избежание"
+--L["Filters"] = "Filters"
 L["Font Flags"] = "Параметры шрифта"
 L["Font"] = "Шрифт"
 L["Fountain"] = "Фонтан"
