@@ -1,8 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "zhCN")
 if not L then return end
 
-L["%s (A: %s)"] = "%s (A: %s)" -- A for Absorb
---L["%s (O: %s)"] = "%s (O: %s)" -- O for Overkill
+L["%s (A: %s)"] = "%s (吸收: %s)" -- A for Absorb
+L["%s (O: %s)"] = "%s (过量: %s)" -- O for Overkill
 L["Abilities"] = "技能"
 L["Absorbed"] = "吸收"
 L["Alpha"] = "透明度"
@@ -93,7 +93,7 @@ L["Scale down hits that are below a running average of your recent damage output
 L["Scale Down Small Hits"] = "缩小低伤害"
 L["Scale of the spell icon"] = "技能图标缩放"
 L["Shake"] = "摇晃"
-L["Show Absorbed Damage shown as: '5 (A: 3)' where A: 3 is the absorbed amount"] = "显示 吸收伤害：5(A:3)，其中A:3是吸收的伤害量"
+L["Show Absorbed Damage shown as: '5 (A: 3)' where A: 3 is the absorbed amount"] = "显示 吸收伤害：5（吸收:3），其中 吸收:3 是 吸收伤害量"
 L["Show Absorbed Damage"] = "显示吸收伤害"
 L["Show Truncated Letter"] = "显示缩写选项"
 L["Size"] = "字号"
