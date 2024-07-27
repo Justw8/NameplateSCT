@@ -1,8 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "zhCN")
 if not L then return end
 
-L["%s (A: %s)"] = "%s (A: %s)" -- A for Absorb
---L["%s (O: %s)"] = "%s (O: %s)" -- O for Overkill
+L["%s (A: %s)"] = "%s (吸收: %s)" -- A for Absorb
+L["%s (O: %s)"] = "%s (过量: %s)" -- O for Overkill
 L["Abilities"] = "技能"
 L["Absorbed"] = "吸收"
 L["Alpha"] = "透明度"
