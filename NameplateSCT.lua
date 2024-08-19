@@ -189,7 +189,8 @@ local defaults = {
 			alpha = 0.5,
 		},
 		filterEnabled = false,
-		inverseFilter = false,
+		inverseSpellFilter = false,
+		inverseNPCFilter = false,
 		filter = "",
 		npcFilter = "",
 	},
@@ -743,13 +744,12 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 	if NameplateSCT.db.global.filterEnabled then -- Filter out mobId's if needed
 		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
 		destUnitId = tostring(destUnitId) or "1"
-		if (NameplateSCT.db.global.inverseFilter and not npcFiltersTable[destUnitId]) -- Inverse filter
+		if (NameplateSCT.db.global.inverseNPCFilter and not npcFiltersTable[destUnitId]) -- Inverse filter
 			or
-		(not NameplateSCT.db.global.inverseFilter and npcFiltersTable[destUnitId]) -- Normal Filter
+		(not NameplateSCT.db.global.inverseNPCFilter and npcFiltersTable[destUnitId]) -- Normal Filter
 		then return end
 	end
 	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
-
 		local destUnit = guidToUnit[destGUID]
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
 			if (string.find(clue, "_DAMAGE")) then
@@ -766,7 +766,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				end
 				if NameplateSCT.db.global.filterEnabled then
 					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
-					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
 				end
@@ -788,7 +788,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				end
 				if NameplateSCT.db.global.filterEnabled then
 					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
-					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
 				end
@@ -816,7 +816,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				end
 				if NameplateSCT.db.global.filterEnabled then
 					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
-					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
 				end
@@ -838,7 +838,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 				end
 				if NameplateSCT.db.global.filterEnabled then
 					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
-					if (NameplateSCT.db.global.inverseFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseFilter and spellInFilter) then
+					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
 				end
@@ -1943,23 +1943,37 @@ local filters = {
 			get = function() return NameplateSCT.db.global.filterEnabled end,
 			set = function(_, newValue) NameplateSCT.db.global.filterEnabled = newValue end,
 			order = 1,
-			width = "half",
+			width = 1,
+		},
+		inverseSpellFilter = {
+			type = "toggle",
+			name = L["Inverse Spell Filter"],
+			desc = L["Inverse the logic and only show the spells in the list instead of filtering them away."],
+			get = function() return NameplateSCT.db.global.inverseSpellFilter end,
+			set = function(_, newValue) NameplateSCT.db.global.inverseSpellFilter = newValue end,
+			order = 1.5,
+			width = 1,
 		},
 		inverseFilter = {
 			type = "toggle",
-			name = L["Inverse Filter"],
-			desc = L["Inverse the logic, and only show the spells and npc's in the list instead of filtering them away."],
-			get = function() return NameplateSCT.db.global.inverseFilter end,
-			set = function(_, newValue) NameplateSCT.db.global.inverseFilter = newValue end,
+			name = L["Inverse NPC Filter"],
+			desc = L["Inverse the logic and only show npc's in the list instead of filtering them away."],
+			get = function() return NameplateSCT.db.global.inverseNPCFilter end,
+			set = function(_, newValue) NameplateSCT.db.global.inverseNPCFilter = newValue end,
 			order = 1.5,
-			width = "half",
+			width = 1,
+		},
+		header = {
+			type = "header",
+			name = "",
+			order = 2,
 		},
 		spellList = {
 			type = "input",
 			name = L["Spells"],
 			multiline = 20,
 			desc = L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"],
-			order = 2,
+			order = 3,
 			width = 1,
 			get = function() return NameplateSCT.db.global.filter end,
 			set = function(_, newValue) NameplateSCT:updateFilterTable(newValue) end,
@@ -1969,7 +1983,7 @@ local filters = {
 			name = L["NPCs"],
 			multiline = 20,
 			desc = L["NPC id (eg: 23682) seperated by line\n\n The example is the Headless Horseman."],
-			order = 3,
+			order = 4,
 			width = 1,
 			get = function() return NameplateSCT.db.global.npcFilter end,
 			set = function(_, newValue) NameplateSCT:updateNPCFilterTable(newValue) end,
