@@ -898,8 +898,14 @@ function NameplateSCT:truncateText(amount)
 	end
 
 	if self.db.global.truncateMethod == 'EASTASIA' then
+		local unitLetter = ''
 		if self.db.global.truncateLetter then
-			unitLetter = 'w'
+			unitLetter = L["Truncate Letter East Asia"]
+			if unitLetter == 'Truncate Letter East Asia' then
+				-- miss locale, Use its pronunciation instead
+				-- 'w' means 'wan', 1wan = 10000
+				unitLetter = 'w'
+			end
 		end
 
 		if amount >= 100000 then
