@@ -2008,5 +2008,5 @@ function NameplateSCT:RegisterMenu()
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("NameplateSCT", menu)
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Filters", filters)
 	_, optionsMenuName = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("NameplateSCT", "NameplateSCT")
-	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Filters", "Filters", "NameplateSCT")
+	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Filters", L["Filters"], "NameplateSCT")
 end
