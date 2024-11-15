@@ -740,7 +740,16 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
 end
 
 function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
-if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and playerGUID ~= destGUID then return end -- Cancel out any non player targetted abilities if you have personalSCT only enabled
+    -- Always show missed events, regardless of filter settings
+    if string.find(clue, "_MISSED") then
+        local missType = ...
+        -- Ensure missed events like Dodge, Parry, etc. are displayed
+        self:MissEvent(destGUID, spellName, missType, spellId)
+        return -- Skip further processing for missed events
+    end
+
+    -- Existing spell filtering logic
+    if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and playerGUID ~= destGUID then return end -- Cancel out any non player targetted abilities if you have personalSCT only enabled
 	if NameplateSCT.db.global.filterEnabled then -- Filter out mobId's if needed
 		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
 		destUnitId = tostring(destUnitId) or "1"
@@ -1999,5 +2008,5 @@ function NameplateSCT:RegisterMenu()
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("NameplateSCT", menu)
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Filters", filters)
 	_, optionsMenuName = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("NameplateSCT", "NameplateSCT")
-	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Filters", L["Filters"], "NameplateSCT")
+	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Filters", "Filters", "NameplateSCT")
 end
