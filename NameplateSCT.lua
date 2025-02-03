@@ -969,6 +969,11 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	-- truncate
 	text = self:truncateText(amount)
 
+	-- if damage was done to the player, negate the amount.
+	if playerGUID == guid then
+		text = ("-%s"):format(text)
+	end
+
 	if NameplateSCT.db.global.showAbsorbDamage and absorbed > 0 then
 		local absorbedText = self:truncateText(absorbed)
 		text = L["%s (A: %s)"]:format(text, absorbedText)
