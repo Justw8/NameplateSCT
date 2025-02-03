@@ -1014,7 +1014,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	end
 
 	if (overkill > 0 and self.db.global.shouldDisplayOverkill) then
-		text = self:ColorText(L["%s (O: %s)"]:format(text, overkill), guid, playerGUID, school, spellName, crit)
+		text = self:ColorText(L["%s (O: %s)"]:format(text, self:truncateText(overkill)), guid, playerGUID, school, spellName, crit)
 		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
 	else
 		self:DisplayText(guid, text, size, animation, spellId, pow, spellName)
