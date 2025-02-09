@@ -740,7 +740,7 @@ function NameplateSCT:NAME_PLATE_UNIT_REMOVED(event, unitID)
 end
 
 function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, destGUID, _, _, _, ...)
-if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and playerGUID ~= destGUID then return end -- Cancel out any non player targetted abilities if you have personalSCT only enabled
+    if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and playerGUID ~= destGUID then return end -- Cancel out any non player targetted abilities if you have personalSCT only enabled
 	if NameplateSCT.db.global.filterEnabled then -- Filter out mobId's if needed
 		local _, _, _, _, _, destUnitId = strsplit("-", destGUID)
 		destUnitId = tostring(destUnitId) or "1"
@@ -787,7 +787,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled then
-					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName] or filtersTable["missed"]
 					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
@@ -837,7 +837,7 @@ if NameplateSCT.db.global.personalOnly and NameplateSCT.db.global.personal and p
 					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled then
-					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName] or filtersTable["missed"]
 					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
@@ -1977,7 +1977,7 @@ local filters = {
 			type = "input",
 			name = L["Spells"],
 			multiline = 20,
-			desc = L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"],
+			desc = L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee\nMiss/Parry/Dodge/etc = missed"],
 			order = 3,
 			width = 1,
 			get = function() return NameplateSCT.db.global.filter end,
