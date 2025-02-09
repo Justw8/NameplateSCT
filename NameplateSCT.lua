@@ -787,7 +787,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled then
-					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName] or filtersTable["Missed"]
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName] or filtersTable["missed"]
 					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
@@ -837,7 +837,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 					spellId = nil -- Don't pass spellId 0
 				end
 				if NameplateSCT.db.global.filterEnabled then
-					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName] or filtersTable["Missed"]
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName] or filtersTable["missed"]
 					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
 						return
 					end
@@ -1972,7 +1972,7 @@ local filters = {
 			type = "input",
 			name = L["Spells"],
 			multiline = 20,
-			desc = L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee\nMiss/Parry/Dodge/etc = Missed"],
+			desc = L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee\nMiss/Parry/Dodge/etc = missed"],
 			order = 3,
 			width = 1,
 			get = function() return NameplateSCT.db.global.filter end,
