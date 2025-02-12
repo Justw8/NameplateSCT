@@ -101,7 +101,7 @@ L["Show Truncated Letter"] = "Показывать символ сокращен
 L["Size"] = "Размер"
 L["Sizing Modifiers"] = "Модификаторы размера"
 L["Small Hits Scale"] = "Размер слабых ударов"
---L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"] = "Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"
+--L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee\nMiss/Parry/Dodge/etc = missed"] = "Spellid/Spellname seperated by line\n\nWhite hits/melee = melee\nMiss/Parry/Dodge/etc = missed"
 --L["Spells"] = "Spells"
 L["Target Strata"] = "Слой цели"
 L["Text Formatting"] = "Форматирование текста"

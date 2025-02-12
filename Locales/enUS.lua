@@ -100,7 +100,7 @@ L["Show Truncated Letter"] = true
 L["Size"] = true
 L["Sizing Modifiers"] = true
 L["Small Hits Scale"] = true
-L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee"] = true
+L["Spellid/Spellname seperated by line\n\nWhite hits/melee = melee\nMiss/Parry/Dodge/etc = missed"] = true
 L["Spells"] = true
 L["Target Strata"] = true
 L["Text Formatting"] = true
