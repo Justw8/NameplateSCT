@@ -1020,14 +1020,14 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 		size = 5
 	end
 
-	if (overkill > 0 and self.db.global.shouldDisplayOverkill) then
-		text = self:ColorText(L["%s (O: %s)"]:format(text, self:truncateText(overkill)), guid, playerGUID, school, spellName, crit)
-		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
-	elseif NameplateSCT.db.global.showIconOnly then
-	    self:DisplayIconWithoutText(guid, size, animation, spellId, pow, spellName)
-	else
-		self:DisplayText(guid, text, size, animation, spellId, pow, spellName)
-	end
+	if NameplateSCT.db.global.showIconOnly then
+       self:DisplayIconWithoutText(guid, size, animation, spellId, pow, spellName)
+    elseif (overkill > 0 and self.db.global.shouldDisplayOverkill) then
+        text = self:ColorText(L["%s (O: %s)"]:format(text, self:truncateText(overkill)), guid, playerGUID, school, spellName, crit)
+        self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
+    else
+        self:DisplayText(guid, text, size, animation, spellId, pow, spellName)
+    end
 end
 
 function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
@@ -1651,7 +1651,7 @@ local menu = {
 					iconOnly = {
                         type = 'toggle',
                         name = "Display Icon Only",
-                        desc = "Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc and Overkill displays",
+                        desc = "Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc displays",
                         get = function() return NameplateSCT.db.global.showIconOnly end,
                         set = function(_, newValue) NameplateSCT.db.global.showIconOnly = newValue end,
                         order = 2,
