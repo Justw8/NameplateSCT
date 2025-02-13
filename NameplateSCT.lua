@@ -966,20 +966,22 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 		alpha = self.db.global.formatting.alpha
 	end
 
-	-- truncate
-	text = self:truncateText(amount)
+    if not NameplateSCT.db.global.showIconOnly then
+        -- truncate
+        text = self:truncateText(amount)
 
-	-- if damage was done to the player, negate the amount.
-	if playerGUID == guid then
-		text = ("-%s"):format(text)
-	end
+        -- if damage was done to the player, negate the amount.
+        if playerGUID == guid then
+            text = ("-%s"):format(text)
+        end
 
-	if NameplateSCT.db.global.showAbsorbDamage and absorbed > 0 then
-		local absorbedText = self:truncateText(absorbed)
-		text = L["%s (A: %s)"]:format(text, absorbedText)
-	end
-	-- color text
-	text = self:ColorText(text, guid, playerGUID, school, spellName, crit)
+        if NameplateSCT.db.global.showAbsorbDamage and absorbed > 0 then
+            local absorbedText = self:truncateText(absorbed)
+            text = L["%s (A: %s)"]:format(text, absorbedText)
+        end
+        -- color text
+        text = self:ColorText(text, guid, playerGUID, school, spellName, crit)
+    end
 
 	-- shrink small hits
 	if (self.db.global.sizing.smallHits or self.db.global.sizing.smallHitsHide) and playerGUID ~= guid then
@@ -1019,8 +1021,10 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	end
 
 	if (overkill > 0 and self.db.global.shouldDisplayOverkill) then
-		text = self:ColorText(L["%s (O: %s)"]:format(text, self:truncateText(overkill)), guid, playerGUID, school, spellName, crit)
+		text = self:ColorText(L["%s (O: %s)"]:format(text, overkill), guid, playerGUID, school, spellName, crit)
 		self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
+	elseif NameplateSCT.db.global.showIconOnly then
+	    self:DisplayIconWithoutText(guid, size, animation, spellId, pow, spellName)
 	else
 		self:DisplayText(guid, text, size, animation, spellId, pow, spellName)
 	end
@@ -1125,8 +1129,74 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
 				NameplateSCT.db.global.yOffsetIcon
 			)
 		end
-			fontString.icon = icon
+        fontString.icon = icon
+    else
+		if fontString.icon then
+			fontString.icon:Hide()
+			if MSQ and NameplateSCT.db.global.enableMSQ then
+				fontString.icon.button:Hide()
+			end
+		end
+	end
+	self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation)
+end
+
+function NameplateSCT:DisplayIconWithoutText(guid, size, animation, spellId, pow, spellName)
+	local fontString
+	local icon
+	local unit = guidToUnit[guid]
+	local nameplate
+
+	if (unit) then
+		nameplate = C_NamePlate.GetNamePlateForUnit(unit)
+	end
+
+	-- if there isn't an anchor frame, make sure that there is a guidNameplatePosition cache entry
+	if playerGUID == guid and not unit then
+		nameplate = "player"
+	elseif (not nameplate) then
+		return
+	end
+
+	fontString = getFontString()
+	fontString.NSCTFontSize = size
+	fontString.startHeight = fontString.NSCTFontSize
+	fontString.pow = pow
+
+	if (fontString.startHeight <= 0) then
+	    fontString.startHeight = 5
+	end
+
+	fontString.unit = unit
+	fontString.guid = guid
+
+	local texture = GetSpellTexture(spellId or spellName or "")
+	if NameplateSCT.db.global.showIcon and texture then
+		icon = fontString.icon
+		icon:Show()
+		icon:SetTexture(texture)
+		if MSQ and NameplateSCT.db.global.enableMSQ then
+			icon.button:SetSize(size * NameplateSCT.db.global.iconScale, size * NameplateSCT.db.global.iconScale)
+			icon.button:SetPoint(
+				inversePositions[NameplateSCT.db.global.iconPosition],
+				fontString,
+				NameplateSCT.db.global.iconPosition,
+				NameplateSCT.db.global.xOffsetIcon,
+				NameplateSCT.db.global.yOffsetIcon
+			)
+			icon.button:Show()
 		else
+			icon:SetSize(size*NameplateSCT.db.global.iconScale, size*NameplateSCT.db.global.iconScale)
+			icon:SetPoint(
+				inversePositions[NameplateSCT.db.global.iconPosition],
+				fontString,
+				NameplateSCT.db.global.iconPosition,
+				NameplateSCT.db.global.xOffsetIcon,
+				NameplateSCT.db.global.yOffsetIcon
+			)
+		end
+        fontString.icon = icon
+    else
 		if fontString.icon then
 			fontString.icon:Hide()
 			if MSQ and NameplateSCT.db.global.enableMSQ then
@@ -1578,6 +1648,15 @@ local menu = {
 						order = 1,
 						width = "Half"
 					},
+					iconOnly = {
+                        type = 'toggle',
+                        name = "Display Icon Only",
+                        desc = "Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc and Overkill displays",
+                        get = function() return NameplateSCT.db.global.showIconOnly end,
+                        set = function(_, newValue) NameplateSCT.db.global.showIconOnly = newValue end,
+                        order = 2,
+                        width = "Half"
+                    },
 					enableMSQ = {
 						type = 'toggle',
 						name = L["Enable Masque"],
@@ -1585,7 +1664,7 @@ local menu = {
 						hidden = function() return not NameplateSCT.db.global.showIcon end,
 						get = function() return NameplateSCT.db.global.enableMSQ end,
 						set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue end,
-						order = 2,
+						order = 3,
 						width = "Half"
 					},
 					iconScale = {
@@ -1599,7 +1678,7 @@ local menu = {
 						hidden = function() return not NameplateSCT.db.global.showIcon end,
 						get = function() return NameplateSCT.db.global.iconScale end,
 						set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue end,
-						order = 3,
+						order = 4,
 						width = "Half"
 					},
 					iconPosition = {
