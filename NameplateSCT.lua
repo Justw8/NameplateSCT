@@ -1650,8 +1650,8 @@ local menu = {
 					},
 					iconOnly = {
                         type = 'toggle',
-                        name = "Display Icon Only",
-                        desc = "Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc displays",
+                        name = L["Display Icon Only"],
+                        desc = L["Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc displays"],
                         get = function() return NameplateSCT.db.global.showIconOnly end,
                         set = function(_, newValue) NameplateSCT.db.global.showIconOnly = newValue end,
                         order = 2,

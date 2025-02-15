@@ -29,6 +29,8 @@ if not L then return end
 --L["Dialog"] = "Dialog"
 --L["Disabled"] = "Disabled"
 --L["Display Icon"] = "Display Icon"
+--L["Display Icon Only"] = "Display Icon Only"
+--L["Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc displays"] = "Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc displays"
 --L["Display Off-Target Text"] = "Display Off-Target Text"
 --L["Display Overkill"] = "Display Overkill"
 --L["Display your overkill for a target over your own nameplate"] = "Display your overkill for a target over your own nameplate"
