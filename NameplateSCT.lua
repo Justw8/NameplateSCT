@@ -752,26 +752,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 	if playerGUID == sourceGUID or (NameplateSCT.db.global.personal and playerGUID == destGUID) then -- Player events
 		local destUnit = guidToUnit[destGUID]
 		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
-			if string.find(clue, "_DAMAGE") or string.find(clue, "DAMAGE_SHIELD") then
-				local spellName, amount, overkill, school, critical, spellId, absorbed
-				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, _, _, _, absorbed, critical = "melee", ...
-				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, school, _, _, absorbed, critical = ...
-				else
-					spellId, spellName, _, amount, overkill, school, _, _, absorbed, critical = ...
-				end
-				if spellId and spellId == 0 then
-					spellId = nil -- Don't pass spellId 0
-				end
-				if NameplateSCT.db.global.filterEnabled then
-					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
-					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
-						return
-					end
-				end
-				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId, absorbed)
-			elseif(string.find(clue, "_MISSED")) then
+			if string.find(clue, "_MISSED") then
 				local spellName, missType, spellId, amount, school
 
 				if (string.find(clue, "SWING")) then
@@ -797,19 +778,14 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				else
 					self:MissEvent(destGUID, spellName, missType, spellId)
 				end
-			end
-		end
-	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
-		local destUnit = guidToUnit[destGUID]
-		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
-			if string.find(clue, "_DAMAGE") or string.find(clue, "DAMAGE_SHIELD") then
-				local spellName, amount, overkill, critical, spellId, absorbed
+			elseif string.find(clue, "_DAMAGE") or string.find(clue, "DAMAGE_SHIELD") then -- After _MISSED to not catch SPELL_DAMAGE_SHIELD_MISSED
+				local spellName, amount, overkill, school, critical, spellId, absorbed
 				if (string.find(clue, "SWING")) then
-					spellName, amount, overkill, _, _, _, absorbed, critical, _, _, _ = "pet", ...
+					spellName, amount, overkill, _, _, _, absorbed, critical = "melee", ...
 				elseif (string.find(clue, "ENVIRONMENTAL")) then
-					spellName, amount, overkill, _, _, _, absorbed, critical= ...
+					spellName, amount, overkill, school, _, _, absorbed, critical = ...
 				else
-					spellId, spellName, _, amount, overkill, _, _, _, absorbed, critical = ...
+					spellId, spellName, _, amount, overkill, school, _, _, absorbed, critical = ...
 				end
 				if spellId and spellId == 0 then
 					spellId = nil -- Don't pass spellId 0
@@ -820,8 +796,13 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 						return
 					end
 				end
-				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId, absorbed)
-			elseif(string.find(clue, "_MISSED")) then -- Check for absorbed damage
+				self:DamageEvent(destGUID, spellName, amount, overkill, school, critical, spellId, absorbed)
+			end
+		end
+	elseif (bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_GUARDIAN) > 0 or bit.band(sourceFlags, COMBATLOG_OBJECT_TYPE_PET) > 0)	and bit.band(sourceFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) > 0 then -- Pet/Guardian events
+		local destUnit = guidToUnit[destGUID]
+		if (destUnit) or (destGUID == playerGUID and NameplateSCT.db.global.personal) then
+			if string.find(clue, "_MISSED") then
 				local spellName, missType, spellId, amount
 
 				if (string.find(clue, "SWING")) then
@@ -845,6 +826,25 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				if missType == "ABSORB" then
 					self:DamageEvent(destGUID, spellName, 0, -1, "pet", critical, spellId, amount)
 				end
+			elseif string.find(clue, "_DAMAGE") or string.find(clue, "DAMAGE_SHIELD") then -- After _MISSED to not catch SPELL_DAMAGE_SHIELD_MISSED
+				local spellName, amount, overkill, critical, spellId, absorbed
+				if (string.find(clue, "SWING")) then
+					spellName, amount, overkill, _, _, _, absorbed, critical, _, _, _ = "pet", ...
+				elseif (string.find(clue, "ENVIRONMENTAL")) then
+					spellName, amount, overkill, _, _, _, absorbed, critical= ...
+				else
+					spellId, spellName, _, amount, overkill, _, _, _, absorbed, critical = ...
+				end
+				if spellId and spellId == 0 then
+					spellId = nil -- Don't pass spellId 0
+				end
+				if NameplateSCT.db.global.filterEnabled then
+					local spellInFilter = filtersTable[tostring(spellId)] or filtersTable[spellName]
+					if (NameplateSCT.db.global.inverseSpellFilter and not spellInFilter) or (not NameplateSCT.db.global.inverseSpellFilter and spellInFilter) then
+						return
+					end
+				end
+				self:DamageEvent(destGUID, spellName, amount, overkill, "pet", critical, spellId, absorbed)
 			end
 		end
 	end
