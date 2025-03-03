@@ -1161,7 +1161,7 @@ function NameplateSCT:DisplayIconWithoutText(guid, size, animation, spellId, pow
 
 	fontString = getFontString()
 	fontString.NSCTText = ""
-    fontString:SetText(fontString.NSCTText)
+	fontString:SetText(fontString.NSCTText)
 	fontString.NSCTFontSize = size
 	fontString.startHeight = fontString.NSCTFontSize
 	fontString.pow = pow
