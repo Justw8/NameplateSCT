@@ -207,6 +207,48 @@ function NameplateSCT:updateFilterTable(filterData)
 	end
 end
 
+-- Register slash command
+SLASH_NPSCT1 = '/npsct'
+
+-- Handle slash command input
+function SlashCmdList.NPSCT(msg)
+	-- Split input
+	local command, spell = msg:match("^(%S*)%s*(.-)$")
+
+	-- Retrieve current filters, defaulting to empty if nil
+	local filters = NameplateSCT.db.global.filter or ""
+
+	-- Handle adding filters
+	if command == "addfilter" and spell ~= "" then
+		-- Check if spell already exists in filters (handles first, middle, or last line cases)
+		if not filters:match("\n" .. spell .. "\n") and not filters:match("^" .. spell .. "\n") and not filters:match("\n" .. spell .. "$") and filters ~= spell then
+			-- Append the new spell to filters, adding a newline if filters isn't empty
+			NameplateSCT:updateFilterTable(filters .. (filters ~= "" and "\n" or "") .. spell)
+			print("Added " .. spell .. " to filter")
+		else
+			print(spell .. " already exists in filter")
+		end
+
+	-- Handle removing filters
+	elseif command == "removefilter" and spell ~= "" then
+		-- Remove the spell from the filter list, accounting for newlines around the entry
+		local newFilters, count = filters:gsub("\n?" .. spell .. "\n?", function(match)
+			-- Maintain single newline if the match is surrounded by newlines (in middle of list)
+			return match:match("^\n") and match:match("\n$") and "\n" or ""
+		end)
+
+		-- Check if any replacement occurred, indicating spell was found and removed
+		if count > 0 then
+			NameplateSCT:updateFilterTable(newFilters)
+			print("Removed " .. spell .. " from filter")
+		else
+			print(spell .. " not found in filter")
+		end
+	else
+		print("Usage: /npsct addfilter||removefilter <spell name or ID>")
+	end
+end
+
 local npcFiltersTable = {}
 
 function NameplateSCT:updateNPCFilterTable(npcFilterData)
