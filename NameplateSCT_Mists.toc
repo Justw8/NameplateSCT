@@ -1,0 +1,14 @@
+## Interface: 50500
+## Version: @project-version@
+## Title: NameplateSCT
+## Author: mpstark, Justwait
+## SavedVariables: NameplateSCTDB
+## Notes: Nameplate-based scrolling combat text.
+## OptionalDeps: Ace3, LibEasing
+
+## X-Curse-Project-ID: 269544
+## X-Wago-ID: rN4VDxKD
+
+embeds.xml
+Locales\locale.xml
+NameplateSCT.lua
