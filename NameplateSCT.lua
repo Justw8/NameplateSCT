@@ -44,6 +44,7 @@ local animationValues = {
 	["verticalDown"] = L["Vertical Down"],
 	["fountain"] = L["Fountain"],
 	["rainfall"] = L["Rainfall"],
+	["fireworks"] = L["Fireworks"],
 	["disabled"] = L["Disabled"]
 }
 
@@ -651,6 +652,15 @@ local function AnimationOnUpdate()
 					_, yOffset = verticalPath(elapsed, fontString.animatingDuration, -fontString.distance)
 					xOffset = fontString.rainfallX
 					yOffset = yOffset + fontString.rainfallStartY
+				elseif (fontString.animation == "fireworks") then
+					-- 烟花效果：从中心点向四周发散
+					local angle = fontString.fireworksAngle or (math.random() * 2 * math.pi)
+					local progress = elapsed / fontString.animatingDuration
+					-- 使用自定义的缓动函数：起始快，滞留慢
+					local easedProgress = progress < 0.5 and 2 * progress * progress or 1 - math.pow(-2 * progress + 2, 2) / 2
+					local distance = (fontString.fireworksDistance or 100) * easedProgress
+					xOffset = distance * math.cos(angle)
+					yOffset = distance * math.sin(angle)
 				-- elseif (fontString.animation == "shake") then
 					-- TODO
 				end
@@ -698,6 +708,9 @@ function NameplateSCT:Animate(fontString, anchorFrame, duration, animation)
 		fontString.distance = math.random(ANIMATION_RAINFALL_Y_MIN, ANIMATION_RAINFALL_Y_MAX)
 		fontString.rainfallX = math.random(-ANIMATION_RAINFALL_X_MAX, ANIMATION_RAINFALL_X_MAX)
 		fontString.rainfallStartY = -math.random(ANIMATION_RAINFALL_Y_START_MIN, ANIMATION_RAINFALL_Y_START_MAX)
+	elseif (animation == "fireworks") then
+		fontString.fireworksAngle = math.random() * 2 * math.pi
+		fontString.fireworksDistance = math.random(80, 150)
 	-- elseif (animation == "shake") then
 	--	 fontString.deflection = ANIMATION_SHAKE_DEFLECTION
 	--	 fontString.numShakes = ANIMATION_SHAKE_NUM_SHAKES

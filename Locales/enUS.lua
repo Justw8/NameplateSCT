@@ -49,6 +49,7 @@ L["Filters"] = true
 L["Font Flags"] = true
 L["Font"] = true
 L["Fountain"] = true
+L["Fireworks"] = true
 L["Has soft max/min, you can type whatever you'd like into the editbox"] = true
 L["Hide hits that are below a running average of your recent damage output"] = true
 L["Hide hits that are below this threshold."] = true
