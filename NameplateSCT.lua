@@ -653,23 +653,31 @@ local function AnimationOnUpdate()
 					xOffset = fontString.rainfallX
 					yOffset = yOffset + fontString.rainfallStartY
 				elseif (fontString.animation == "fireworks") then
-					-- 烟花效果：从中心点向四周发散
+					-- 烟花效果：从半径80的圆周向四周发散
 					local angle = fontString.fireworksAngle or (math.random() * 2 * math.pi)
 					local progress = elapsed / fontString.animatingDuration
 					-- 使用自定义的缓动函数：起始快，滞留慢
 					local easedProgress = progress < 0.5 and 2 * progress * progress or 1 - math.pow(-2 * progress + 2, 2) / 2
 					local distance = (fontString.fireworksDistance or 100) * easedProgress
-					xOffset = distance * math.cos(angle)
-					yOffset = distance * math.sin(angle)
+					
+					-- 固定起始半径 80
+					local startRadius = 80
+					xOffset = (startRadius + distance) * math.cos(angle)
+					yOffset = (startRadius + distance) * math.sin(angle)
 				-- elseif (fontString.animation == "shake") then
 					-- TODO
 				end
 
 				if (not UnitIsDead(fontString.unit) and fontString.anchorFrame and fontString.anchorFrame:IsShown()) then
-					if fontString.unit == "player" then -- player frame
-					fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffsetPersonal + xOffset + randomX[fontString], NameplateSCT.db.global.yOffsetPersonal + yOffset + randomY[fontString]) -- Only allows for adjusting vertical offset
-					else -- nameplate frames
-					fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset + randomX[fontString], NameplateSCT.db.global.yOffset + yOffset + randomY[fontString])
+					if fontString.animation == "fireworks" then
+						-- 烟花效果忽略全局偏移和随机抖动，始终相对于中心
+						fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", xOffset, yOffset)
+					else
+						if fontString.unit == "player" then -- player frame
+							fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffsetPersonal + xOffset + randomX[fontString], NameplateSCT.db.global.yOffsetPersonal + yOffset + randomY[fontString]) -- Only allows for adjusting vertical offset
+						else -- nameplate frames
+							fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", NameplateSCT.db.global.xOffset + xOffset + randomX[fontString], NameplateSCT.db.global.yOffset + yOffset + randomY[fontString])
+						end
 					end
 				else
 					recycleFontString(fontString)
