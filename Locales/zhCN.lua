@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "zhCN")
 if not L then return end
 
+L["Fireworks Settings"] = "烟花设置"
+L["Fireworks Duration"] = "烟花持续时间"
+L["Duration of the fireworks animation"] = "烟花动画的持续时间"
+
 L["%s (A: %s)"] = "%s (吸收: %s)" -- A for Absorb
 L["%s (O: %s)"] = "%s (过量: %s)" -- O for Overkill
 L["Abilities"] = "技能"

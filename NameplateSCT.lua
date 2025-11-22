@@ -170,7 +170,8 @@ local defaults = {
 			autoattack = "fountain",
 			autoattackcrit = "verticalUp",
 			animationspeed = 1,
-			fireworksRadius = 150,
+			fireworksRadius = 100,
+			fireworksDuration = 1,
 		},
 
 		animationsPersonal = {
@@ -580,6 +581,56 @@ local function powSizing(elapsed, duration, start, middle, finish)
 	return size
 end
 
+-- CSS linear() points
+local linearPoints = {
+	{0, 0},
+	{0.036, 0.21},
+	{0.074, 0.402},
+	{0.113, 0.568},
+	{0.153, 0.711},
+	{0.173, 0.772},
+	{0.194, 0.83},
+	{0.215, 0.882},
+	{0.237, 0.929},
+	{0.259, 0.97},
+	{0.282, 1.008},
+	{0.306, 1.04},
+	{0.33, 1.067},
+	{0.349, 1.084},
+	{0.369, 1.099},
+	{0.389, 1.111},
+	{0.41, 1.12},
+	{0.432, 1.127},
+	{0.454, 1.13},
+	{0.477, 1.132},
+	{0.501, 1.13},
+	{0.54, 1.124},
+	{0.585, 1.111},
+	{0.629, 1.095},
+	{0.755, 1.044},
+	{0.795, 1.03},
+	{0.832, 1.019},
+	{0.873, 1.01},
+	{0.913, 1.004},
+	{0.954, 1.001},
+	{1, 1}
+}
+
+local function GetLinearEasing(p)
+	if p <= 0 then return linearPoints[1][2] end
+	if p >= 1 then return linearPoints[#linearPoints][2] end
+
+	for i = 1, #linearPoints - 1 do
+		local p1 = linearPoints[i]
+		local p2 = linearPoints[i+1]
+		if p >= p1[1] and p < p2[1] then
+			local percent = (p - p1[1]) / (p2[1] - p1[1])
+			return p1[2] + (p2[2] - p1[2]) * percent
+		end
+	end
+	return linearPoints[#linearPoints][2]
+end
+
 local function AnimationOnUpdate()
 	if (next(animating)) then
 		for fontString, _ in pairs(animating) do
@@ -657,8 +708,8 @@ local function AnimationOnUpdate()
 					-- 烟花效果：从配置的起始半径圆周向四周发散
 					local angle = fontString.fireworksAngle or (math.random() * 2 * math.pi)
 					local progress = elapsed / fontString.animatingDuration
-					-- 使用自定义的缓动函数：起始快，滞留慢
-					local easedProgress = progress < 0.5 and 2 * progress * progress or 1 - math.pow(-2 * progress + 2, 2) / 2
+					-- 使用自定义的 linear() 缓动函数
+					local easedProgress = GetLinearEasing(progress)
 					local distance = (fontString.fireworksDistance or 100) * easedProgress
 					
 					-- 获取配置的起始半径
@@ -1160,7 +1211,11 @@ function NameplateSCT:DisplayText(guid, text, size, animation, spellId, pow, spe
 			end
 		end
 	end
-	self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation)
+	local duration = NameplateSCT.db.global.animations.animationspeed
+	if animation == "fireworks" then
+		duration = NameplateSCT.db.global.animations.fireworksDuration
+	end
+	self:Animate(fontString, nameplate, duration, animation)
 end
 
 function NameplateSCT:DisplayIconWithoutText(guid, size, animation, spellId, pow, spellName)
@@ -1226,7 +1281,11 @@ function NameplateSCT:DisplayIconWithoutText(guid, size, animation, spellId, pow
 			end
 		end
 	end
-	self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation)
+	local duration = NameplateSCT.db.global.animations.animationspeed
+	if animation == "fireworks" then
+		duration = NameplateSCT.db.global.animations.fireworksDuration
+	end
+	self:Animate(fontString, nameplate, duration, animation)
 end
 
 function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
@@ -1288,7 +1347,11 @@ function NameplateSCT:DisplayTextOverkill(guid, text, size, animation, spellId, 
 		end
 	end
 	end
-	self:Animate(fontString, nameplate, NameplateSCT.db.global.animations.animationspeed, animation)
+	local duration = NameplateSCT.db.global.animations.animationspeed
+	if animation == "fireworks" then
+		duration = NameplateSCT.db.global.animations.fireworksDuration
+	end
+	self:Animate(fontString, nameplate, duration, animation)
 end
 
 function NameplateSCT:ColorText(startingText, guid, playerGUID, school, spellName, crit)
@@ -1441,16 +1504,40 @@ local menu = {
 					order = 1,
 					width = "full",
 				},
+				fireworksSettings = {
+					type = 'header',
+					name = L["Fireworks Settings"],
+					order = 1.2,
+				},
 				fireworksRadius = {
 					type = 'range',
 					name = L["Fireworks Radius"],
 					desc = L["Start radius for fireworks animation"],
 					disabled = function() return not NameplateSCT.db.global.enabled end,
-					min = 100,
-					max = 250,
-					step = 10,
+					min = 0,
+					max = 200,
+					step = 20,
 					get = function() return NameplateSCT.db.global.animations.fireworksRadius end,
 					set = function(_, newValue) NameplateSCT.db.global.animations.fireworksRadius = newValue end,
+					order = 1.3,
+					width = "normal",
+				},
+				fireworksDuration = {
+					type = 'range',
+					name = L["Fireworks Duration"],
+					desc = L["Duration of the fireworks animation"],
+					disabled = function() return not NameplateSCT.db.global.enabled end,
+					min = 0.5,
+					max = 3,
+					step = 0.5,
+					get = function() return NameplateSCT.db.global.animations.fireworksDuration end,
+					set = function(_, newValue) NameplateSCT.db.global.animations.fireworksDuration = newValue end,
+					order = 1.4,
+					width = "normal",
+				},
+				fireworksSpacer = {
+					type = 'description',
+					name = "",
 					order = 1.5,
 					width = "full",
 				},

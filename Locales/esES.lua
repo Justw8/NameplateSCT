@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "esES")
 if not L then return end
 
+L["Fireworks Settings"] = "Fireworks Settings"
+L["Fireworks Duration"] = "Fireworks Duration"
+L["Duration of the fireworks animation"] = "Duration of the fireworks animation"
+
 --L["%s (A: %s)"] = "%s (A: %s)" -- A for Absorb
 --L["%s (O: %s)"] = "%s (O: %s)" -- O for Overkill
 L["Abilities"] = "Habilidades"
