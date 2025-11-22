@@ -170,6 +170,7 @@ local defaults = {
 			autoattack = "fountain",
 			autoattackcrit = "verticalUp",
 			animationspeed = 1,
+			fireworksRadius = 150,
 		},
 
 		animationsPersonal = {
@@ -653,15 +654,15 @@ local function AnimationOnUpdate()
 					xOffset = fontString.rainfallX
 					yOffset = yOffset + fontString.rainfallStartY
 				elseif (fontString.animation == "fireworks") then
-					-- 烟花效果：从半径80的圆周向四周发散
+					-- 烟花效果：从配置的起始半径圆周向四周发散
 					local angle = fontString.fireworksAngle or (math.random() * 2 * math.pi)
 					local progress = elapsed / fontString.animatingDuration
 					-- 使用自定义的缓动函数：起始快，滞留慢
 					local easedProgress = progress < 0.5 and 2 * progress * progress or 1 - math.pow(-2 * progress + 2, 2) / 2
 					local distance = (fontString.fireworksDistance or 100) * easedProgress
 					
-					-- 固定起始半径 80
-					local startRadius = 80
+					-- 获取配置的起始半径
+					local startRadius = NameplateSCT.db.global.animations.fireworksRadius
 					xOffset = (startRadius + distance) * math.cos(angle)
 					yOffset = (startRadius + distance) * math.sin(angle)
 				-- elseif (fontString.animation == "shake") then
@@ -1438,6 +1439,19 @@ local menu = {
 					get = function() return NameplateSCT.db.global.animations.animationspeed end,
 					set = function(_, newValue) NameplateSCT.db.global.animations.animationspeed = newValue end,
 					order = 1,
+					width = "full",
+				},
+				fireworksRadius = {
+					type = 'range',
+					name = L["Fireworks Radius"],
+					desc = L["Start radius for fireworks animation"],
+					disabled = function() return not NameplateSCT.db.global.enabled end,
+					min = 100,
+					max = 250,
+					step = 10,
+					get = function() return NameplateSCT.db.global.animations.fireworksRadius end,
+					set = function(_, newValue) NameplateSCT.db.global.animations.fireworksRadius = newValue end,
+					order = 1.5,
 					width = "full",
 				},
 				ability = {

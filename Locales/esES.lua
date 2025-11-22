@@ -51,6 +51,8 @@ L["Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc di
 --L["Font"] = "Font"
 --L["Fountain"] = "Fountain"
 L["Fireworks"] = "Fuegos artificiales"
+L["Fireworks Radius"] = "Fireworks Radius"
+L["Start radius for fireworks animation"] = "Start radius for fireworks animation"
 --L["Has soft max/min, you can type whatever you'd like into the editbox"] = "Has soft max/min, you can type whatever you'd like into the editbox"
 --L["Hide hits that are below a running average of your recent damage output"] = "Hide hits that are below a running average of your recent damage output"
 --L["Hide hits that are below this threshold."] = "Hide hits that are below this threshold."
