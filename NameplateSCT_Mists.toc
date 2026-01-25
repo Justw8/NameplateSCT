@@ -1,4 +1,4 @@
-## Interface: 50500
+## Interface: 50503
 ## Version: @project-version@
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait

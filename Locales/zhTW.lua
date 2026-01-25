@@ -1,6 +1,9 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "zhTW")
 if not L then return end
 
+--L["Unfortunately Blizzard has not added a SCT API in Midnight, until they do this addon will not have any functionality."]
+--L["If you want to enable or disable the blizzard SCT you can do so here"] = true
+--L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"] = true
 L["%s (A: %s)"] = "%s (吸收: %s)" -- A for Absorb
 L["%s (O: %s)"] = "%s (過量: %s)" -- O for Overkill
 L["Abilities"] = "技能"
