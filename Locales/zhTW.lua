@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "zhTW")
 if not L then return end
 
+L["Fireworks Settings"] = "煙火設定"
+L["Fireworks Duration"] = "煙火持續時間"
+L["Duration of the fireworks animation"] = "煙火動畫的持續時間"
+
 --L["Unfortunately Blizzard has not added a SCT API in Midnight, until they do this addon will not have any functionality."]
 --L["If you want to enable or disable the blizzard SCT you can do so here"] = true
 --L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"] = true
@@ -53,6 +57,9 @@ L["Filters"] = "過濾器"
 L["Font Flags"] = "文字樣式"
 L["Font"] = "字體"
 L["Fountain"] = "潮吹噴泉"
+L["Fireworks"] = "煙花"
+L["Fireworks Radius"] = "煙火起始半徑"
+L["Start radius for fireworks animation"] = "煙火動畫的起始半徑"
 L["Has soft max/min, you can type whatever you'd like into the editbox"] = "有軟上限 / 下限，請隨意輸入喜愛的數值。"
 L["Hide hits that are below a running average of your recent damage output"] = "隱藏低於最近輸出平均值的傷害。"
 L["Hide hits that are below this threshold."] = "隱藏低於此閥值的命中。"

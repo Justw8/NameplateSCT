@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "koKR")
 if not L then return end
 
+L["Fireworks Settings"] = "Fireworks Settings"
+L["Fireworks Duration"] = "Fireworks Duration"
+L["Duration of the fireworks animation"] = "Duration of the fireworks animation"
+
 --L["Unfortunately Blizzard has not added a SCT API in Midnight, until they do this addon will not have any functionality."]
 --L["If you want to enable or disable the blizzard SCT you can do so here"] = true
 --L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"] = true
@@ -53,6 +57,9 @@ L["Evaded"] = "벗어남"
 L["Font Flags"] = "글꼴 외곽선"
 L["Font"] = "글꼴"
 L["Fountain"] = "분수"
+L["Fireworks"] = "불꽃놀이"
+L["Fireworks Radius"] = "Fireworks Radius"
+L["Start radius for fireworks animation"] = "Start radius for fireworks animation"
 L["Has soft max/min, you can type whatever you'd like into the editbox"] = "최대/최소 값이 있습니다, 입력창에 원하는 값을 입력할 수 있습니다."
 L["Hide hits that are below a running average of your recent damage output"] = "피해량이 최근 피해량의 평균보다 낮으면 숨깁니다"
 --L["Hide hits that are below this threshold."] = "Hide hits that are below this threshold."

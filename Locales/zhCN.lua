@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("NameplateSCT", "zhCN")
 if not L then return end
 
+L["Fireworks Settings"] = "烟花设置"
+L["Fireworks Duration"] = "烟花持续时间"
+L["Duration of the fireworks animation"] = "烟花动画的持续时间"
+
 L["Unfortunately Blizzard has not added a SCT API in Midnight, until they do this addon will not have any functionality."] = "不幸的是，暴雪在《至暗之夜》版本中仍未添加浮动战斗文字的相关API。在实现此功能前，该插件将无法正常运行。"
 L["If you want to enable or disable the blizzard SCT you can do so here"] = "如需启用或禁用暴雪浮动战斗文字（SCT），可在此处设置"
 L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"] = "感谢大家多年来的支持，希望未来我们能重新推出NameplateSCT！- Justwait"
@@ -53,6 +57,9 @@ L["Filters"] = "过滤器"
 L["Font Flags"] = "字体描边"
 L["Font"] = "字体"
 L["Fountain"] = "弧形"
+L["Fireworks"] = "烟花"
+L["Fireworks Radius"] = "烟花起始半径"
+L["Start radius for fireworks animation"] = "烟花动画的起始半径"
 L["Has soft max/min, you can type whatever you'd like into the editbox"] = "有最大值/最小值限制，可在输入框中输入规则内的任意数值"
 L["Hide hits that are below a running average of your recent damage output"] = "隐藏低于最近攻击平均值的伤害"
 L["Hide hits that are below this threshold."] = "隐藏低于此阈值的命中伤害。"
