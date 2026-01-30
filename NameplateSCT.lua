@@ -360,6 +360,7 @@ local function getFontString()
 		end
 		fontString.icon:SetAlpha(1)
 		fontString.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+		if NameplateSCT.db.global.removeBorder then fontString.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92) end
 		fontString.icon:Hide()
 
 		if MSQ and NameplateSCT.db.global.enableMSQ then
@@ -1233,6 +1234,8 @@ function NameplateSCT:DisplayIconWithoutText(guid, size, animation, spellId, pow
 	end
 
 	fontString = getFontString()
+	fontString.NSCTText = ""
+	fontString:SetText(fontString.NSCTText)
 	fontString.NSCTFontSize = size
 	fontString.startHeight = fontString.NSCTFontSize
 	fontString.pow = pow
@@ -1776,6 +1779,15 @@ local menu = {
                         order = 2,
                         width = "Half"
                     },
+                    removeBorders = {
+                        type = 'toggle',
+                        name = L["Remove Icon borders"],
+                        desc = L["Zoom a bit into the icon to remove default blizzard border"],
+                        get = function() return NameplateSCT.db.global.removeBorder end,
+                        set = function(_, newValue) NameplateSCT.db.global.removeBorder = newValue end,
+                        order = 3,
+                        width = "Half"
+                    },
 					enableMSQ = {
 						type = 'toggle',
 						name = L["Enable Masque"],
@@ -1783,7 +1795,7 @@ local menu = {
 						hidden = function() return not NameplateSCT.db.global.showIcon end,
 						get = function() return NameplateSCT.db.global.enableMSQ end,
 						set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue end,
-						order = 3,
+						order = 4,
 						width = "Half"
 					},
 					iconScale = {
@@ -1797,7 +1809,7 @@ local menu = {
 						hidden = function() return not NameplateSCT.db.global.showIcon end,
 						get = function() return NameplateSCT.db.global.iconScale end,
 						set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue end,
-						order = 4,
+						order = 5,
 						width = "Half"
 					},
 					iconPosition = {
