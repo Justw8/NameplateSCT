@@ -17,6 +17,7 @@ NameplateSCT.frame = CreateFrame("Frame", nil, UIParent)
 local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture or GetSpellTexture
 local _, _, _, build = GetBuildInfo()
 local isMidnight = build >= 120000
+local blizzardCvar = isMidnight and "floatingCombatTextCombatDamage_v2" or "floatingCombatTextCombatDamage"
 
 ------------
 -- LOCALS --
@@ -1347,12 +1348,12 @@ local menu = {
 		disableBlizzardFCT = {
 			type = 'toggle',
 			name = L["BlizzardSCT"],
-			get = function(_, newValue) return GetCVar("floatingCombatTextCombatDamage") == "1" end,
+			get = function(_, newValue) return GetCVar(blizzardCvar) == "1" end,
 			set = function(_, newValue)
 				if (newValue) then
-					SetCVar("floatingCombatTextCombatDamage", 1)
+					SetCVar(blizzardCvar, 1)
 				else
-					SetCVar("floatingCombatTextCombatDamage", 0)
+					SetCVar(blizzardCvar, 0)
 				end
 			end,
 			order = 5,
