@@ -760,11 +760,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				local spellName, missType, spellId, amount, school
 
 				if (string.find(clue, "SWING")) then
-					if destGUID == playerGUID then
-						missType, _, amount, critical = ...
-					else
-						missType, _, amount, critical = "melee", ...
-					end
+					missType, _, amount, critical = ...
 				else
 					spellId, spellName, school, missType, _, amount, critical = ...
 				end
@@ -810,11 +806,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				local spellName, missType, spellId, amount
 
 				if (string.find(clue, "SWING")) then
-					if destGUID == playerGUID then
 					missType, _, amount, critical = ...
-					else
-					missType, _, amount, critical = "melee", ...
-					end
 				else
 					spellId, spellName, _, missType, _, amount, critical = ...
 				end
