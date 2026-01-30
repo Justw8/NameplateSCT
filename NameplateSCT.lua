@@ -714,7 +714,7 @@ local function AnimationOnUpdate()
 					-- Fireworks effect: radiates outward from the configured starting radius circle
 					local angle = fontString.fireworksAngle or (math.random() * 2 * math.pi)
 					local progress = elapsed / fontString.animatingDuration
-					-- 使用自定义的 linear() 缓动函数
+					-- Use custom linear() easing function
 					local easedProgress = GetLinearEasing(progress)
 					local distance = (fontString.fireworksDistance or 100) * easedProgress
 
@@ -726,7 +726,7 @@ local function AnimationOnUpdate()
 					-- TODO
 				end
 
-				if (not UnitIsDead(fontString.unit) and fontString.anchorFrame and fontString.anchorFrame:IsShown()) then
+				if ((not UnitIsDead(fontString.unit) or fontString.unit == "player") and fontString.anchorFrame and fontString.anchorFrame:IsShown()) then
 					if fontString.animation == "fireworks" then
 						-- -- Fireworks effect ignores global offset and random jitter, always relative to center
 						fontString:SetPoint("CENTER", fontString.anchorFrame, "CENTER", xOffset, yOffset)
@@ -993,6 +993,7 @@ local runningAverageDamageEvents = 0
 function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, crit, spellId, absorbed)
 	local amount = amount or 0
 	local absorbed = absorbed or 0
+	local onPlayer = guid == playerGUID
 
 	-- Hide small hits based on threshold
 	if self.db.global.sizing.hideSmallHitsThreshold > (amount + absorbed) then
@@ -1004,16 +1005,16 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 
 	-- select an animation
 	if (autoattack and crit) then
-		animation = guid ~= playerGUID and self.db.global.animations.autoattackcrit or self.db.global.animationsPersonal.crit
+		animation = not onPlayer and self.db.global.animations.autoattackcrit or self.db.global.animationsPersonal.crit
 		pow = true
 	elseif (autoattack) then
-		animation = guid ~= playerGUID and self.db.global.animations.autoattack or self.db.global.animationsPersonal.normal
+		animation = not onPlayer and self.db.global.animations.autoattack or self.db.global.animationsPersonal.normal
 		pow = false
 	elseif (crit) then
-		animation = guid ~= playerGUID and self.db.global.animations.crit or self.db.global.animationsPersonal.crit
+		animation = not onPlayer and self.db.global.animations.crit or self.db.global.animationsPersonal.crit
 		pow = true
 	elseif (not autoattack and not crit) then
-		animation = guid ~= playerGUID and self.db.global.animations.ability or self.db.global.animationsPersonal.normal
+		animation = not onPlayer and self.db.global.animations.ability or self.db.global.animationsPersonal.normal
 		pow = false
 	end
 
@@ -1029,7 +1030,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 		return
 	end
 
-	if (self.db.global.useOffTargetAppearance and not isTarget and playerGUID ~= guid) then
+	if (self.db.global.useOffTargetAppearance and not isTarget and not onPlayer) then
 		size = self.db.global.offTargetFormatting.size
 		alpha = self.db.global.offTargetFormatting.alpha
 	else
@@ -1042,7 +1043,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
         text = self:truncateText(amount)
 
         -- if damage was done to the player, negate the amount.
-        if playerGUID == guid then
+        if onPlayer then
             text = ("-%s"):format(text)
         end
 
@@ -1055,7 +1056,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
     end
 
 	-- shrink small hits
-	if (self.db.global.sizing.smallHits or self.db.global.sizing.smallHitsHide) and playerGUID ~= guid then
+	if (self.db.global.sizing.smallHits or self.db.global.sizing.smallHitsHide) and not onPlayer then
 		if (not lastDamageEventTime or (lastDamageEventTime + SMALL_HIT_EXPIRY_WINDOW < GetTime())) then
 			numDamageEvents = 0
 			runningAverageDamageEvents = 0
@@ -1077,7 +1078,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 	end
 
 	-- embiggen crit's size
-	if (self.db.global.sizing.crits and crit) and playerGUID ~= guid then
+	if (self.db.global.sizing.crits and crit) and not onPlayer then
 		if (autoattack and not self.db.global.sizing.autoattackcritsizing) then
 			-- don't embiggen autoattacks
 			pow = false
@@ -1093,7 +1094,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 
     if NameplateSCT.db.global.showIconOnly then
         self:DisplayIconWithoutText(guid, size, animation, spellId, pow, spellName)
-    elseif (overkill > 0 and self.db.global.shouldDisplayOverkill) then
+    elseif (overkill > 0 and (self.db.global.shouldDisplayOverkill or onPlayer)) then
         text = self:ColorText(L["%s (O: %s)"]:format(text, self:truncateText(overkill)), guid, playerGUID, school, spellName, crit)
         self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
     else
@@ -1107,17 +1108,15 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 	local isTarget = unit and UnitIsUnit(unit, "target")
 
 	if playerGUID ~= guid then
-	animation = self.db.global.animations.miss
-	color = self.db.global.defaultColor
+		animation = self.db.global.animations.miss
+		color = self.db.global.defaultColor
 	else
-	animation = self.db.global.animationsPersonal.miss
-	color = self.db.global.defaultColorPersonal
+		animation = self.db.global.animationsPersonal.miss
+		color = self.db.global.defaultColorPersonal
 	end
 
 	-- No animation set, cancel out
-	if (animation == "disabled") then
-	return
-	end
+	if (animation == "disabled") then return end
 
 	if (self.db.global.useOffTargetAppearance and not isTarget and playerGUID ~= guid) then
 		size = self.db.global.offTargetFormatting.size
