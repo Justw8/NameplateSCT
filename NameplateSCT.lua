@@ -15,6 +15,9 @@ NameplateSCT.frame = CreateFrame("Frame", nil, UIParent)
 -------------------
 
 local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture or GetSpellTexture
+local _, _, _, build = GetBuildInfo()
+local isMidnight = build >= 120000
+local blizzardCvar = isMidnight and "floatingCombatTextCombatDamage_v2" or "floatingCombatTextCombatDamage"
 
 ------------
 -- LOCALS --
@@ -505,9 +508,11 @@ end
 function NameplateSCT:OnEnable()
 	playerGUID = UnitGUID("player")
 
-	self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
-	self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-	self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+	if not isMidnight then -- disable for midnight :(
+		self:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+		self:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+		self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+	end
 
 	self.db.global.enabled = true
 end
@@ -829,11 +834,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				local spellName, missType, spellId, amount, school
 
 				if (string.find(clue, "SWING")) then
-					if destGUID == playerGUID then
-						missType, _, amount, critical = ...
-					else
-						missType, _, amount, critical = "melee", ...
-					end
+					missType, _, amount, critical = ...
 				else
 					spellId, spellName, school, missType, _, amount, critical = ...
 				end
@@ -879,11 +880,7 @@ function NameplateSCT:CombatFilter(_, clue, _, sourceGUID, _, sourceFlags, _, de
 				local spellName, missType, spellId, amount
 
 				if (string.find(clue, "SWING")) then
-					if destGUID == playerGUID then
 					missType, _, amount, critical = ...
-					else
-					missType, _, amount, critical = "melee", ...
-					end
 				else
 					spellId, spellName, _, missType, _, amount, critical = ...
 				end
@@ -1428,12 +1425,12 @@ local menu = {
 		disableBlizzardFCT = {
 			type = 'toggle',
 			name = L["BlizzardSCT"],
-			get = function(_, newValue) return GetCVar("floatingCombatTextCombatDamage") == "1" end,
+			get = function(_, newValue) return GetCVar(blizzardCvar) == "1" end,
 			set = function(_, newValue)
 				if (newValue) then
-					SetCVar("floatingCombatTextCombatDamage", 1)
+					SetCVar(blizzardCvar, 1)
 				else
-					SetCVar("floatingCombatTextCombatDamage", 0)
+					SetCVar(blizzardCvar, 0)
 				end
 			end,
 			order = 5,
@@ -2137,6 +2134,54 @@ local menu = {
 	},
 }
 
+if isMidnight then
+	menu.args = {
+		disabledInMidnight = {
+			type = 'description',
+			name = "|cFFFF0000"..L["Unfortunately Blizzard has not added a SCT API in Midnight, until they do this addon will not have any functionality."].."|r",
+			order = 1,
+			width = "full",
+			fontSize = "large",
+		},
+		header = {
+			type = 'header',
+			name = "",
+			order = 2,
+		},
+		blizzardToggleDesc = {
+			type = 'description',
+			name = L["If you want to enable or disable the blizzard SCT you can do so here"],
+			order = 3,
+			width = "full",
+		},
+		disableBlizzardFCT = {
+			type = 'toggle',
+			name = L["BlizzardSCT"],
+			get = function(_, newValue) return GetCVar("floatingCombatTextCombatDamage") == "1" end,
+			set = function(_, newValue)
+				if (newValue) then
+					SetCVar("floatingCombatTextCombatDamage", 1)
+				else
+					SetCVar("floatingCombatTextCombatDamage", 0)
+				end
+			end,
+			order = 4,
+			width = "full",
+		},
+		header2 = {
+			type = 'header',
+			name = "",
+			order = 5,
+		},
+		thankYou = {
+			type = 'description',
+			name = "|cFFFFFF00"..L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"].."|r",
+			order = 6,
+			width = "full",
+		},
+	}
+end
+
 local filters = {
 	name = L["Filters"],
 	handler = NameplateSCT,
@@ -2203,7 +2248,9 @@ end
 
 function NameplateSCT:RegisterMenu()
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("NameplateSCT", menu)
-	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Filters", filters)
 	_, optionsMenuName = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("NameplateSCT", "NameplateSCT")
-	LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Filters", L["Filters"], "NameplateSCT")
+	if not isMidnight then
+		LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Filters", filters)
+		LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Filters", L["Filters"], "NameplateSCT")
+	end
 end

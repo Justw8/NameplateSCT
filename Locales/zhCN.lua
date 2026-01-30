@@ -5,6 +5,9 @@ L["Fireworks Settings"] = "烟花设置"
 L["Fireworks Duration"] = "烟花持续时间"
 L["Duration of the fireworks animation"] = "烟花动画的持续时间"
 
+L["Unfortunately Blizzard has not added a SCT API in Midnight, until they do this addon will not have any functionality."] = "不幸的是，暴雪在《至暗之夜》版本中仍未添加浮动战斗文字的相关API。在实现此功能前，该插件将无法正常运行。"
+L["If you want to enable or disable the blizzard SCT you can do so here"] = "如需启用或禁用暴雪浮动战斗文字（SCT），可在此处设置"
+L["Thank you for the years of support, and hopefully we'll be able to bring NameplateSCT back in the future! - Justwait"] = "感谢大家多年来的支持，希望未来我们能重新推出NameplateSCT！- Justwait"
 L["%s (A: %s)"] = "%s (吸收: %s)" -- A for Absorb
 L["%s (O: %s)"] = "%s (过量: %s)" -- O for Overkill
 L["Abilities"] = "技能"
