@@ -1134,7 +1134,9 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 	pow = true
 
 	text = MISS_EVENT_STRINGS[missType] or L["Missed"]
-	text = "|Cff"..color..text.."|r"
+	if spellName ~= nil then
+		text = "|Cff"..color..text.."|r"
+	end
 
 	self:DisplayText(guid, text, size, animation, spellId, pow, spellName)
 end
