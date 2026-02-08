@@ -135,6 +135,8 @@ local defaults = {
 		defaultColor = "ffff00",
 		useCritColor = false,
 		critColor = "ffff00",
+		useMissColor = false,
+		missColor = "ffffff",
 
 		showIcon = true,
 		enableMSQ = true,
@@ -147,6 +149,8 @@ local defaults = {
 
 		damageColorPersonal = false,
 		defaultColorPersonal = "ff0000",
+		useMissColorPersonal = false,
+		missColorPersonal = "ffffff",
 
 		truncateMethod = 'WESTERN',
 		truncateLetter = true,
@@ -1109,10 +1113,10 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 
 	if playerGUID ~= guid then
 		animation = self.db.global.animations.miss
-		color = self.db.global.defaultColor
+		color = self.db.global.useMissColor and self.db.global.missColor or defaults.missColor
 	else
 		animation = self.db.global.animationsPersonal.miss
-		color = self.db.global.defaultColorPersonal
+		color = self.db.global.useMissColorPersonal and self.db.global.missColorPersonal or defaults.missColorPersonal
 	end
 
 	-- No animation set, cancel out
@@ -1669,11 +1673,35 @@ local menu = {
 					get = function() return hexToRGB(NameplateSCT.db.global.critColor) end,
 					order = 8,
 				},
-				offsetNewLine = {
+				missColorNewLine = {
 					type = 'description',
 					name = "",
 					desc = "",
 					order = 9,
+				},
+				useMissColor = {
+					type = 'toggle',
+					name = L["Custom Miss Color"],
+					desc = "",
+					get = function() return NameplateSCT.db.global.useMissColor end,
+					set = function(_, newValue) NameplateSCT.db.global.useMissColor = newValue end,
+					order = 10,
+				},
+				missColor = {
+					type = 'color',
+					name = L["Miss Color"],
+					desc = "",
+					disabled = function() return not NameplateSCT.db.global.useMissColor end,
+					hasAlpha = false,
+					set = function(_, r, g, b) NameplateSCT.db.global.missColor = rgbToHex(r, g, b) end,
+					get = function() return hexToRGB(NameplateSCT.db.global.missColor) end,
+					order = 11,
+				},
+				offsetNewLine = {
+					type = 'description',
+					name = "",
+					desc = "",
+					order = 12,
 				},
 				targetStrata = {
 					type = 'select',
@@ -1685,7 +1713,7 @@ local menu = {
 						adjustStrata()
 					end,
 					values = stratas,
-					order = 10,
+					order = 20,
 				},
 				modOffTargetStrata = {
 					type = 'toggle',
@@ -1693,7 +1721,7 @@ local menu = {
 					desc = "",
 					get = function() return NameplateSCT.db.global.modOffTargetStrata end,
 					set = function(_, newValue) NameplateSCT.db.global.modOffTargetStrata = newValue end,
-					order = 11,
+					order = 21,
 				},
 				offTargetStrata = {
 					type = 'select',
@@ -1703,7 +1731,7 @@ local menu = {
 					get = function() return NameplateSCT.db.global.strata.offTarget end,
 					set = function(_, newValue) NameplateSCT.db.global.strata.offTarget = newValue end,
 					values = stratas,
-					order = 12,
+					order = 22,
 				},
 				xOffset = {
 					type = 'range',
@@ -1714,7 +1742,7 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.xOffset end,
 					set = function(_, newValue) NameplateSCT.db.global.xOffset = newValue end,
-					order = 13,
+					order = 23,
 					width = 1.5,
 				},
 				yOffset = {
@@ -1726,7 +1754,7 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.yOffset end,
 					set = function(_, newValue) NameplateSCT.db.global.yOffset = newValue end,
-					order = 14,
+					order = 24,
 					width = 1.5,
 				},
 				xVariance = {
@@ -1738,7 +1766,7 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.xVariance end,
 					set = function(_, newValue) NameplateSCT.db.global.xVariance = newValue end,
-					order = 15,
+					order = 25,
 					width = 1.5,
 				},
 				yVariance = {
@@ -1750,102 +1778,102 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.yVariance end,
 					set = function(_, newValue) NameplateSCT.db.global.yVariance = newValue end,
-					order = 16,
+					order = 26,
 					width = 1.5,
 				},
 				iconAppearance = {
-				type = 'group',
-				name = L["Icons"],
-				order = 60,
-				inline = true,
-				disabled = function() return not NameplateSCT.db.global.enabled end,
-				args = {
-					showIcon = {
-						type = 'toggle',
-						name = L["Display Icon"],
-						desc = "",
-						get = function() return NameplateSCT.db.global.showIcon end,
-						set = function(_, newValue) NameplateSCT.db.global.showIcon = newValue end,
-						order = 1,
-						width = "Half"
+					type = 'group',
+					name = L["Icons"],
+					order = 60,
+					inline = true,
+					disabled = function() return not NameplateSCT.db.global.enabled end,
+					args = {
+						showIcon = {
+							type = 'toggle',
+							name = L["Display Icon"],
+							desc = "",
+							get = function() return NameplateSCT.db.global.showIcon end,
+							set = function(_, newValue) NameplateSCT.db.global.showIcon = newValue end,
+							order = 1,
+							width = "Half"
+						},
+						iconOnly = {
+							type = 'toggle',
+							name = L["Display Icon Only"],
+							desc = L["Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc displays"],
+							get = function() return NameplateSCT.db.global.showIconOnly end,
+							set = function(_, newValue) NameplateSCT.db.global.showIconOnly = newValue end,
+							order = 2,
+							width = "Half"
+						},
+						removeBorders = {
+							type = 'toggle',
+							name = L["Remove Icon borders"],
+							desc = L["Zoom a bit into the icon to remove default blizzard border"],
+							get = function() return NameplateSCT.db.global.removeBorder end,
+							set = function(_, newValue) NameplateSCT.db.global.removeBorder = newValue end,
+							order = 3,
+							width = "Half"
+						},
+						enableMSQ = {
+							type = 'toggle',
+							name = L["Enable Masque"],
+							desc = L["Let Masuqe skin the icons"],
+							hidden = function() return not NameplateSCT.db.global.showIcon end,
+							get = function() return NameplateSCT.db.global.enableMSQ end,
+							set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue end,
+							order = 4,
+							width = "Half"
+						},
+						iconScale = {
+							type = 'range',
+							name = L["Icon Scale"],
+							desc = L["Scale of the spell icon"],
+							softMin = 0.5,
+							softMax = 2,
+							isPercent = true,
+							step = 0.01,
+							hidden = function() return not NameplateSCT.db.global.showIcon end,
+							get = function() return NameplateSCT.db.global.iconScale end,
+							set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue end,
+							order = 5,
+							width = "Half"
+						},
+						iconPosition = {
+							type = 'select',
+							name = L["Position"],
+							desc = "",
+							hidden = function() return not NameplateSCT.db.global.showIcon end,
+							get = function() return NameplateSCT.db.global.iconPosition or "Right" end,
+							set = function(_, newValue) NameplateSCT.db.global.iconPosition = newValue end,
+							values = positionValues,
+							order = 6,
+						},
+						xOffsetIcon = {
+							type = 'range',
+							name = L["Icon X Offset"],
+							hidden = function() return not NameplateSCT.db.global.showIcon end,
+							softMin = -30,
+							softMax = 30,
+							step = 1,
+							get = function() return NameplateSCT.db.global.xOffsetIcon or 0 end,
+							set = function(_, newValue) NameplateSCT.db.global.xOffsetIcon = newValue end,
+							order = 7,
+							width = "Half",
+						},
+						yOffsetIcon = {
+							type = 'range',
+							name = L["Icon Y Offset"],
+							hidden = function() return not NameplateSCT.db.global.showIcon end,
+							softMin = -30,
+							softMax = 30,
+							step = 1,
+							get = function() return NameplateSCT.db.global.yOffsetIcon or 0 end,
+							set = function(_, newValue) NameplateSCT.db.global.yOffsetIcon = newValue end,
+							order = 8,
+							width = "Half",
+						},
 					},
-					iconOnly = {
-                        type = 'toggle',
-                        name = L["Display Icon Only"],
-                        desc = L["Display only the icon for damage.\nWill not change Miss, Dodge, Parry, etc displays"],
-                        get = function() return NameplateSCT.db.global.showIconOnly end,
-                        set = function(_, newValue) NameplateSCT.db.global.showIconOnly = newValue end,
-                        order = 2,
-                        width = "Half"
-                    },
-                    removeBorders = {
-                        type = 'toggle',
-                        name = L["Remove Icon borders"],
-                        desc = L["Zoom a bit into the icon to remove default blizzard border"],
-                        get = function() return NameplateSCT.db.global.removeBorder end,
-                        set = function(_, newValue) NameplateSCT.db.global.removeBorder = newValue end,
-                        order = 3,
-                        width = "Half"
-                    },
-					enableMSQ = {
-						type = 'toggle',
-						name = L["Enable Masque"],
-						desc = L["Let Masuqe skin the icons"],
-						hidden = function() return not NameplateSCT.db.global.showIcon end,
-						get = function() return NameplateSCT.db.global.enableMSQ end,
-						set = function(_, newValue) NameplateSCT.db.global.enableMSQ = newValue end,
-						order = 4,
-						width = "Half"
-					},
-					iconScale = {
-						type = 'range',
-						name = L["Icon Scale"],
-						desc = L["Scale of the spell icon"],
-						softMin = 0.5,
-						softMax = 2,
-						isPercent = true,
-						step = 0.01,
-						hidden = function() return not NameplateSCT.db.global.showIcon end,
-						get = function() return NameplateSCT.db.global.iconScale end,
-						set = function(_, newValue) NameplateSCT.db.global.iconScale = newValue end,
-						order = 5,
-						width = "Half"
-					},
-					iconPosition = {
-						type = 'select',
-						name = L["Position"],
-						desc = "",
-						hidden = function() return not NameplateSCT.db.global.showIcon end,
-						get = function() return NameplateSCT.db.global.iconPosition or "Right" end,
-						set = function(_, newValue) NameplateSCT.db.global.iconPosition = newValue end,
-						values = positionValues,
-						order = 6,
-					},
-					xOffsetIcon = {
-						type = 'range',
-						name = L["Icon X Offset"],
-						hidden = function() return not NameplateSCT.db.global.showIcon end,
-						softMin = -30,
-						softMax = 30,
-						step = 1,
-						get = function() return NameplateSCT.db.global.xOffsetIcon or 0 end,
-						set = function(_, newValue) NameplateSCT.db.global.xOffsetIcon = newValue end,
-						order = 7,
-						width = "Half",
-					},
-					yOffsetIcon = {
-						type = 'range',
-						name = L["Icon Y Offset"],
-						hidden = function() return not NameplateSCT.db.global.showIcon end,
-						softMin = -30,
-						softMax = 30,
-						step = 1,
-						get = function() return NameplateSCT.db.global.yOffsetIcon or 0 end,
-						set = function(_, newValue) NameplateSCT.db.global.yOffsetIcon = newValue end,
-						order = 8,
-						width = "Half",
-					},
-				},
 				},
 			},
 		},
@@ -1902,6 +1930,30 @@ local menu = {
 					get = function() return hexToRGB(NameplateSCT.db.global.defaultColorPersonal) end,
 					order = 45,
 				},
+				personalMissColorNewLine = {
+					type = 'description',
+					name = "",
+					desc = "",
+					order = 49,
+				},
+				useMissColorPersonal = {
+					type = 'toggle',
+					name = L["Custom Miss Color"],
+					desc = "",
+					get = function() return NameplateSCT.db.global.useMissColorPersonal end,
+					set = function(_, newValue) NameplateSCT.db.global.useMissColorPersonal = newValue end,
+					order = 50,
+				},
+				missColorPersonal = {
+					type = 'color',
+					name = L["Miss Color"],
+					desc = "",
+					disabled = function() return not NameplateSCT.db.global.useMissColorPersonal end,
+					hasAlpha = false,
+					set = function(_, r, g, b) NameplateSCT.db.global.missColorPersonal = rgbToHex(r, g, b) end,
+					get = function() return hexToRGB(NameplateSCT.db.global.missColorPersonal) end,
+					order = 55,
+				},
 				xOffsetPersonal = {
 					type = 'range',
 					name = L["X Offset Personal SCT"],
@@ -1911,7 +1963,7 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.xOffsetPersonal end,
 					set = function(_, newValue) NameplateSCT.db.global.xOffsetPersonal = newValue end,
-					order = 50,
+					order = 80,
 					width = "full",
 				},
 				yOffsetPersonal = {
@@ -1923,7 +1975,7 @@ local menu = {
 					step = 1,
 					get = function() return NameplateSCT.db.global.yOffsetPersonal end,
 					set = function(_, newValue) NameplateSCT.db.global.yOffsetPersonal = newValue end,
-					order = 60,
+					order = 90,
 					width = "full",
 				},
 			},
