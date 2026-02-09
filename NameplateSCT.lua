@@ -1116,7 +1116,7 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 		color = self.db.global.useMissColor and self.db.global.missColor or defaults.global.missColor
 	else
 		animation = self.db.global.animationsPersonal.miss
-		color = self.db.global.useMissColorPersonal and self.db.global.missColorPersonal or defaults.globalmissColorPersonal
+		color = self.db.global.useMissColorPersonal and self.db.global.missColorPersonal or defaults.global.missColorPersonal
 	end
 
 	-- No animation set, cancel out
