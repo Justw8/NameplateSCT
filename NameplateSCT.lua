@@ -1113,10 +1113,10 @@ function NameplateSCT:MissEvent(guid, spellName, missType, spellId)
 
 	if playerGUID ~= guid then
 		animation = self.db.global.animations.miss
-		color = self.db.global.useMissColor and self.db.global.missColor or defaults.missColor
+		color = self.db.global.useMissColor and self.db.global.missColor or defaults.global.missColor
 	else
 		animation = self.db.global.animationsPersonal.miss
-		color = self.db.global.useMissColorPersonal and self.db.global.missColorPersonal or defaults.missColorPersonal
+		color = self.db.global.useMissColorPersonal and self.db.global.missColorPersonal or defaults.globalmissColorPersonal
 	end
 
 	-- No animation set, cancel out
