@@ -941,31 +941,38 @@ local function commaSeperate(number)
 end
 
 function NameplateSCT:truncateText(amount)
-	local text = ''
-	if self.db.global.truncateMethod == 'NONE' then
-		if (self.db.global.commaSeperate) then
-			text = commaSeperate(amount)
-		else
-			text = tostring(amount)
-		end
 
-	elseif self.db.global.truncateMethod == 'WESTERN' then
-		local unitLetter = ''
+	if self.db.global.truncateMethod == 'NONE' then
+		if self.db.global.commaSeperate then
+			return commaSeperate(amount)
+		else
+			return tostring(amount)
+		end
+	end
+
+	local unitLetter = ''
+	if self.db.global.truncateMethod == 'WESTERN' then
 		if self.db.global.truncateLetter then
-			unitLetter = 'k'
+			unitLetter = 'K'
 		end
 
 		if amount >= 1000000 and self.db.global.truncateLetter then
-			text = string.format("%.1fM", amount / 1000000)
-		elseif amount >= 10000 then
-			text = string.format("%.0f%s", amount / 1000, unitLetter)
-		elseif amount >= 1000 then
-			text = string.format("%.1f%s", amount / 1000, unitLetter)
-		else
-			text = tostring(amount)
+			unitLetter = 'M'
+			return  string.format("%.1f%s", amount / 1000000, unitLetter)
 		end
-	elseif self.db.global.truncateMethod == 'EASTASIA' then
 
+		if amount >= 10000 then
+			return string.format("%.0f%s", amount / 1000, unitLetter)
+		end
+
+		if amount >= 1000 then
+			return string.format("%.1f%s", amount / 1000, unitLetter)
+		end
+
+		return tostring(amount)
+	end
+
+	if self.db.global.truncateMethod == 'EASTASIA' then
 		local unitLetter = ''
 		if self.db.global.truncateLetter then
 			unitLetter = L["Truncate Letter East Asia"]
@@ -977,15 +984,14 @@ function NameplateSCT:truncateText(amount)
 		end
 
 		if amount >= 100000 then
-			text = string.format("%.0f%s", amount / 10000, unitLetter)
-		elseif amount >= 10000 then
-			text = string.format("%.1f%s", amount / 10000, unitLetter)
-		else
-			text = tostring(amount)
+			return string.format("%.0f%s", amount / 10000, unitLetter)
 		end
-	else
-		-- Never reach
-		text = tostring(amount)
+		if amount >= 10000 then
+			return string.format("%.1f%s", amount / 10000, unitLetter)
+		end
+
+		return tostring(amount)
+
 	end
 
 	return text
