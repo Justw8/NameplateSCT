@@ -1,14 +1,8 @@
-## Interface: 110207, 120000
-## Version: @project-version@
+## Interface: 110207, 120001
+## Version: 2.0-midnight
 ## Title: NameplateSCT
 ## Author: mpstark, Justwait
 ## SavedVariables: NameplateSCTDB
-## Notes: Nameplate-based scrolling combat text.
-## OptionalDeps: Ace3, LibEasing
+## Notes: Nameplate-based scrolling combat text. Midnight compatible, zero dependencies.
 
-## X-Curse-Project-ID: 269544
-## X-Wago-ID: rN4VDxKD
-
-embeds.xml
-Locales\locale.xml
 NameplateSCT.lua
