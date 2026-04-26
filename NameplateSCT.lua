@@ -1098,7 +1098,7 @@ function NameplateSCT:DamageEvent(guid, spellName, amount, overkill, school, cri
 
     if NameplateSCT.db.global.showIconOnly then
         self:DisplayIconWithoutText(guid, size, animation, spellId, pow, spellName)
-    elseif (overkill > 0 and (self.db.global.shouldDisplayOverkill or onPlayer)) then
+    elseif (type(overkill) == "number" and overkill > 0 and (self.db.global.shouldDisplayOverkill or onPlayer)) then
         text = self:ColorText(L["%s (O: %s)"]:format(text, self:truncateText(overkill)), guid, playerGUID, school, spellName, crit)
         self:DisplayTextOverkill(guid, text, size, animation, spellId, pow, spellName)
     else
